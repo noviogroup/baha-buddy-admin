@@ -1,0 +1,77 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Baha Buddy Admin — Netlify deployment config
+# ═══════════════════════════════════════════════════════════════════════════
+# Site: 11145cc2-cdc1-4851-96d2-38b233d764cf
+# Framework: Next.js 14 (App Router)
+# Build: handled by @netlify/plugin-nextjs (SSR functions auto-deployed)
+# ═══════════════════════════════════════════════════════════════════════════
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # Pin Node to the latest LTS that's compatible with Next 14.
+  NODE_VERSION = "20"
+  # Skip Next telemetry pings during build.
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Don't fail the build on lint warnings — those should be caught in CI/PR.
+  NEXT_LINT_SKIP = "1"
+
+[functions]
+  directory = ".netlify/functions-internal"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Security headers — applied to every response.
+# Admin panel is internal-only, so we lock down hard:
+#   - X-Frame-Options DENY     → no iframing, full clickjacking protection
+#   - nosniff                  → strict MIME type enforcement
+#   - strict-origin            → don't leak referrer to third parties
+#   - Permissions-Policy       → disable browser features we don't use
+#   - HSTS                     → force HTTPS for 2 years incl. subdomains
+# ─────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    X-Robots-Tag = "noindex, nofollow"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Cache policy: static assets are content-hashed by Next, so cache forever.
+# API routes must never cache — they return per-admin data with audit
+# side-effects that absolutely must not be served from a CDN.
+# ─────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0, must-revalidate"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Branch deploy contexts. Production builds run from `main`; previews from
+# every PR get a unique URL. Keep the same build command — Next handles
+# the rest. Add per-context env vars in the Netlify dashboard.
+# ─────────────────────────────────────────────────────────────────────────
+[context.production]
+  command = "npm run build"
+
+[context.deploy-preview]
+  command = "npm run build"
+
+[context.branch-deploy]
+  command = "npm run build"
