@@ -11,6 +11,7 @@ import { PlacesModuleV2 } from '@/components/places-module-v2';
 import { PartnersModuleV2 } from '@/components/partners-module-v2';
 import { BookingsModule } from '@/components/bookings-module';
 import { ConciergeOrdersModule } from '@/components/concierge-orders-module';
+import { PaymentsModule } from '@/components/payments-module';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
 export default function CommandCenterPage() {
@@ -37,12 +38,12 @@ export default function CommandCenterPage() {
         <div className="flex flex-col gap-5">
           <div className="bg-white rounded-xl border border-hairline p-6 shadow-card baha-gradient-card">
             <h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-2">Baha Buddy Command Center</h2>
-            <p className="text-sm text-body max-w-3xl leading-relaxed">Grouped workspace for revenue, bookings, concierge orders, travelers, places, partners, systems, and operations.</p>
+            <p className="text-sm text-body max-w-3xl leading-relaxed">Grouped workspace for revenue, bookings, concierge orders, payments, travelers, places, partners, systems, and operations.</p>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Foundation</div><div className="text-2xl font-display font-bold text-ink">Live</div><div className="text-[11px] text-muted mt-1">Access, audit, places, partners</div></div>
-            <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Modules</div><div className="text-2xl font-display font-bold text-ink">16</div><div className="text-[11px] text-muted mt-1">Grouped into 4 sections</div></div>
-            <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Live modules</div><div className="text-2xl font-display font-bold text-ink">7</div><div className="text-[11px] text-muted mt-1">Revenue, bookings, concierge, users, places, partners</div></div>
+            <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Modules</div><div className="text-2xl font-display font-bold text-ink">17</div><div className="text-[11px] text-muted mt-1">Grouped into 4 sections</div></div>
+            <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Live modules</div><div className="text-2xl font-display font-bold text-ink">8</div><div className="text-[11px] text-muted mt-1">Revenue, bookings, concierge, payments, users, places, partners</div></div>
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Revenue gate</div><div className="text-2xl font-display font-bold text-status-success">Concierge</div><div className="text-[11px] text-muted mt-1">Stripe payment to order queue</div></div>
           </div>
         </div>
@@ -52,6 +53,7 @@ export default function CommandCenterPage() {
     if (activeModule === 'revenue') return <RevenueModule />;
     if (activeModule === 'bookings') return <BookingsModule />;
     if (activeModule === 'concierge-orders') return <ConciergeOrdersModule />;
+    if (activeModule === 'payments') return <PaymentsModule />;
     if (activeModule === 'admin-users') return <AdminUsersModule />;
     if (activeModule === 'high-intent') return <HighIntentModule />;
     if (activeModule === 'places') return <PlacesModuleV2 />;
