@@ -85,9 +85,7 @@ export async function POST(request: Request) {
     .eq('stripe_event_id', event.id)
     .maybeSingle();
 
-  if (existingEvent.data) {
-    return NextResponse.json({ received: true, duplicate: true });
-  }
+  if (existingEvent.data) return NextResponse.json({ received: true, duplicate: true });
 
   try {
     if (event.type === 'checkout.session.completed') {
@@ -96,8 +94,39 @@ export async function POST(request: Request) {
       const product = metadata.product || 'concierge_trip_plan';
       const offerId = metadata.offer_id || 'concierge_trip_plan';
       const source = metadata.source || 'unknown';
+      const orderId = typeof metadata.order_id === 'string' && metadata.order_id ? metadata.order_id : null;
+      const userId = typeof metadata.user_id === 'string' && metadata.user_id ? metadata.user_id : null;
       const paymentIntent = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
       const checkoutSessionId = session.id;
+
+      if (orderId) {
+        const { data: updated, error } = await supabase
+          .from('concierge_orders')
+          .update({
+            user_id: userId,
+            offer_type: offerId,
+            price_usd: priceFor(session),
+            status: 'paid',
+            payment_status: 'paid',
+            stripe_checkout_session_id: checkoutSessionId,
+            stripe_payment_intent_id: paymentIntent,
+            source,
+            traveler_email: customerEmail(session),
+            traveler_name: customerName(session),
+            notes: `Stripe Checkout completed for ${product}.`,
+            stripe_metadata: metadata,
+            updated_at: new Date().toISOString(),
+          } as never)
+          .eq('id', orderId)
+          .select('id')
+          .maybeSingle();
+
+        if (error) throw error;
+        if (updated?.id) {
+          await recordEvent(supabase, event, 'concierge_orders');
+          return NextResponse.json({ received: true, order_created: false, order_updated: true, order_id: updated.id });
+        }
+      }
 
       const existingOrder = await supabase
         .from('concierge_orders')
@@ -106,7 +135,8 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (!existingOrder.data) {
-        const { error } = await supabase.from('concierge_orders').insert({
+        const { data: created, error } = await supabase.from('concierge_orders').insert({
+          user_id: userId,
           offer_type: offerId,
           price_usd: priceFor(session),
           status: 'paid',
@@ -118,12 +148,14 @@ export async function POST(request: Request) {
           traveler_name: customerName(session),
           notes: `Stripe Checkout completed for ${product}.`,
           stripe_metadata: metadata,
-        } as never);
+        } as never).select('id').single();
         if (error) throw error;
+        await recordEvent(supabase, event, 'concierge_orders');
+        return NextResponse.json({ received: true, order_created: true, order_id: created?.id });
       }
 
       await recordEvent(supabase, event, 'concierge_orders');
-      return NextResponse.json({ received: true, order_created: !existingOrder.data });
+      return NextResponse.json({ received: true, order_created: false, order_id: existingOrder.data.id });
     }
 
     if (event.type === 'payment_intent.payment_failed') {
