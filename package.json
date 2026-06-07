@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:concierge-webhook": "node scripts/test-concierge-webhook.mjs",
     "sync": "bash scripts/sync.sh"
   },
   "dependencies": {
