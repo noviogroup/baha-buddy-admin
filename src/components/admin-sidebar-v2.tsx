@@ -23,13 +23,13 @@ export function AdminSidebarV2({ activeModule, onNavigate }: AdminSidebarV2Props
   };
 
   return (
-    <aside className="w-72 bg-sidebar-bg flex flex-col shrink-0 sticky top-0 h-screen">
-      <div className="px-5 py-5 border-b border-white/5">
+    <aside className="w-72 bg-sidebar-bg border-r border-sidebar-border flex flex-col shrink-0 sticky top-0 h-screen">
+      <div className="px-5 py-5 border-b border-sidebar-border baha-gradient-card">
         <div className="flex items-center gap-3">
           <BrandLogo size="sm" showText={false} />
           <div>
-            <div className="text-white text-[15px] font-display font-semibold tracking-tight">Baha Buddy</div>
-            <div className="text-zinc-500 text-[10px] tracking-widest font-medium">ADMIN COMMAND CENTER</div>
+            <div className="text-sidebar-text text-[15px] font-display font-bold tracking-tight">Baha Buddy</div>
+            <div className="text-brand-blue text-[10px] tracking-widest font-bold">ADMIN COMMAND CENTER</div>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@ export function AdminSidebarV2({ activeModule, onNavigate }: AdminSidebarV2Props
               <div key={group.id}>
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[10px] tracking-widest uppercase font-semibold text-zinc-500 hover:text-zinc-300"
+                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[10px] tracking-widest uppercase font-bold text-sidebar-muted hover:text-brand-blue hover:bg-brand-blue-light"
                   title={group.description}
                 >
                   <span>{group.label}</span>
@@ -57,15 +57,17 @@ export function AdminSidebarV2({ activeModule, onNavigate }: AdminSidebarV2Props
                         <button
                           key={item.id}
                           onClick={() => onNavigate(item.id)}
-                          className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-left w-full transition-all ${
-                            active ? 'bg-sidebar-active text-white font-semibold' : 'text-zinc-400 hover:text-white hover:bg-sidebar-hover'
+                          className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-left w-full transition-all border ${
+                            active
+                              ? 'bg-white text-brand-blue-dark border-brand-aqua/40 font-bold shadow-card'
+                              : 'text-sidebar-text border-transparent hover:text-brand-blue-dark hover:bg-sidebar-hover hover:border-sidebar-border'
                           }`}
                           title={item.description}
                         >
-                          <span className={active ? 'text-white' : 'opacity-70 group-hover:opacity-100'}>{item.icon}</span>
+                          <span className={active ? 'text-brand-aqua' : 'text-sidebar-muted group-hover:text-brand-blue'}>{item.icon}</span>
                           <span className="flex-1 truncate">{item.label}</span>
                           {item.badge && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold font-bold uppercase tracking-wide">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-gold-light text-status-warning font-bold uppercase tracking-wide">
                               {item.badge}
                             </span>
                           )}
@@ -80,17 +82,17 @@ export function AdminSidebarV2({ activeModule, onNavigate }: AdminSidebarV2Props
         </div>
       </nav>
 
-      <div className="px-4 py-3 border-t border-white/5">
-        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-2">System</div>
+      <div className="px-4 py-3 border-t border-sidebar-border bg-white/65">
+        <div className="text-[10px] text-sidebar-muted uppercase tracking-widest font-bold mb-2">System</div>
         <div className="grid grid-cols-1 gap-1.5 mb-3">
           {SYSTEM_HEALTH_ITEMS.slice(0, 3).map(item => (
-            <div key={item.label} className="flex items-center justify-between text-[11px] text-zinc-500">
-              <span className="flex items-center gap-1.5">{item.icon}{item.label}</span>
-              <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'connected' ? 'bg-status-success' : item.status === 'monitor' ? 'bg-status-warning' : 'bg-zinc-600'}`} />
+            <div key={item.label} className="flex items-center justify-between text-[11px] text-body">
+              <span className="flex items-center gap-1.5 text-sidebar-text">{item.icon}{item.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'connected' ? 'bg-status-success' : item.status === 'monitor' ? 'bg-brand-gold' : 'bg-muted'}`} />
             </div>
           ))}
         </div>
-        <div className="text-zinc-600 text-[10px]">v2.0.0-beta</div>
+        <div className="text-sidebar-muted text-[10px]">v2.0.0-beta</div>
       </div>
     </aside>
   );
