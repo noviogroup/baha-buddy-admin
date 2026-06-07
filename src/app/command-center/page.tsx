@@ -7,8 +7,9 @@ import { AdminModulePlaceholder } from '@/components/admin-module-placeholder';
 import { RevenueModule } from '@/components/revenue-module';
 import { AdminUsersModule } from '@/components/admin-users-module';
 import { HighIntentModule } from '@/components/high-intent-module';
-import { PlacesModule } from '@/components/places-module';
+import { PlacesModuleV2 } from '@/components/places-module-v2';
 import { PartnersModuleV2 } from '@/components/partners-module-v2';
+import { BookingsModule } from '@/components/bookings-module';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
 export default function CommandCenterPage() {
@@ -53,8 +54,8 @@ export default function CommandCenterPage() {
             </div>
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card">
               <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Live modules</div>
-              <div className="text-2xl font-display font-bold text-ink">5</div>
-              <div className="text-[11px] text-muted mt-1">Revenue, Admin Users, High-Intent, Places, Partners</div>
+              <div className="text-2xl font-display font-bold text-ink">6</div>
+              <div className="text-[11px] text-muted mt-1">Revenue, Bookings, Users, High-Intent, Places, Partners</div>
             </div>
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card">
               <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Foundation gate</div>
@@ -67,9 +68,10 @@ export default function CommandCenterPage() {
     }
 
     if (activeModule === 'revenue') return <RevenueModule />;
+    if (activeModule === 'bookings') return <BookingsModule />;
     if (activeModule === 'admin-users') return <AdminUsersModule />;
     if (activeModule === 'high-intent') return <HighIntentModule />;
-    if (activeModule === 'places') return <PlacesModule />;
+    if (activeModule === 'places') return <PlacesModuleV2 />;
     if (activeModule === 'partners') return <PartnersModuleV2 />;
 
     return <AdminModulePlaceholder moduleId={activeModule} />;
