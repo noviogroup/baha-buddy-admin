@@ -35,7 +35,7 @@ type ConciergeResponse = {
   summary: Record<string, number>;
 };
 
-const statusOptions = ['paid', 'in_review', 'needs_info', 'in_progress', 'delivered', 'cancelled', 'refunded', 'payment_failed'];
+const statusOptions = ['selected', 'checkout_started', 'paid', 'details_needed', 'in_review', 'needs_info', 'in_progress', 'itinerary_proposed', 'delivered', 'cancelled', 'refunded', 'payment_failed'];
 
 function money(value: unknown) {
   const n = typeof value === 'number' ? value : parseFloat(String(value ?? 0));
@@ -47,7 +47,9 @@ function StatusBadge({ status }: { status: string }) {
     ? 'bg-status-success-bg text-status-success'
     : status === 'refunded' || status === 'payment_failed' || status === 'cancelled'
       ? 'bg-status-danger-bg text-status-danger'
-      : 'bg-status-warning-bg text-status-warning';
+      : status === 'checkout_started' || status === 'selected' || status === 'details_needed'
+        ? 'bg-brand-blue-light text-brand-blue-dark'
+        : 'bg-status-warning-bg text-status-warning';
   return <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${cls}`}>{status.replace('_', ' ')}</span>;
 }
 
@@ -113,16 +115,16 @@ export function ConciergeOrdersModule() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-1">Concierge Orders Queue</h2>
-            <p className="text-sm text-body max-w-3xl leading-relaxed">Turn paid Stripe Checkout sessions into operational orders the team can review, assign, fulfill, and deliver.</p>
+            <p className="text-sm text-body max-w-3xl leading-relaxed">Track account-based checkout, paid orders, trip details, itinerary proposal, fulfillment, and delivery.</p>
           </div>
           <button onClick={reload} className="px-3 py-1.5 rounded-lg bg-white border border-hairline text-xs font-semibold text-body hover:border-brand-blue"><RefreshCw size={13} className="inline mr-1" /> Refresh</button>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        <Stat icon={<FileText size={18} />} label="Paid Orders" value={s.total || 0} sub={`${s.in_review || 0} in review · ${s.in_progress || 0} in progress`} />
-        <Stat icon={<DollarSign size={18} />} label="Concierge Revenue" value={money(s.revenue || 0)} sub="Paid checkout revenue" />
-        <Stat icon={<UserCheck size={18} />} label="Delivered" value={s.delivered || 0} sub="Completed plans" />
+        <Stat icon={<FileText size={18} />} label="Orders" value={s.total || 0} sub={`${s.checkout_started || 0} checkout · ${s.in_review || 0} review`} />
+        <Stat icon={<DollarSign size={18} />} label="Paid Revenue" value={money(s.revenue || 0)} sub="Paid checkout revenue" />
+        <Stat icon={<UserCheck size={18} />} label="Delivered" value={s.delivered || 0} sub={`${s.itinerary_proposed || 0} proposed`} />
         <Stat icon={<AlertTriangle size={18} />} label="Issues" value={(s.refunded || 0) + (s.payment_failed || 0) + (s.cancelled || 0)} sub="Refunds, failures, cancellations" />
       </div>
 
