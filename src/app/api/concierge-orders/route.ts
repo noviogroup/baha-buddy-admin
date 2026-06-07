@@ -5,7 +5,7 @@ import { logAudit } from '@/lib/audit-log';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const VALID_STATUSES = ['paid', 'in_review', 'needs_info', 'in_progress', 'delivered', 'cancelled', 'refunded', 'payment_failed'];
+const VALID_STATUSES = ['selected', 'checkout_started', 'paid', 'details_needed', 'in_review', 'needs_info', 'in_progress', 'itinerary_proposed', 'delivered', 'cancelled', 'refunded', 'payment_failed'];
 const VALID_PAYMENT_STATUSES = ['paid', 'unpaid', 'failed', 'refunded'];
 
 type ConciergeOrderRow = {
@@ -52,12 +52,12 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
       const paymentKey = row.payment_status || 'unknown';
       const offerKey = `offer_${row.offer_type || 'unknown'}`;
       acc.total += 1;
-      acc.revenue += num(row.price_usd);
+      acc.revenue += row.payment_status === 'paid' ? num(row.price_usd) : 0;
       acc[statusKey] = (acc[statusKey] || 0) + 1;
       acc[`payment_${paymentKey}`] = (acc[`payment_${paymentKey}`] || 0) + 1;
       acc[offerKey] = (acc[offerKey] || 0) + 1;
       return acc;
-    }, { total: 0, revenue: 0, paid: 0, in_review: 0, needs_info: 0, in_progress: 0, delivered: 0, cancelled: 0, refunded: 0, payment_failed: 0 });
+    }, { total: 0, revenue: 0, selected: 0, checkout_started: 0, paid: 0, details_needed: 0, in_review: 0, needs_info: 0, in_progress: 0, itinerary_proposed: 0, delivered: 0, cancelled: 0, refunded: 0, payment_failed: 0 });
 
     const byOffer: Record<string, { count: number; revenue: number }> = {};
     const bySource: Record<string, { count: number; revenue: number }> = {};
@@ -65,10 +65,11 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
     for (const row of rows as any[]) {
       const offer = row.offer_type || 'unknown';
       const src = row.source || 'unknown';
+      const revenue = row.payment_status === 'paid' ? num(row.price_usd) : 0;
       byOffer[offer] = byOffer[offer] || { count: 0, revenue: 0 };
       bySource[src] = bySource[src] || { count: 0, revenue: 0 };
-      byOffer[offer].count += 1; byOffer[offer].revenue += num(row.price_usd);
-      bySource[src].count += 1; bySource[src].revenue += num(row.price_usd);
+      byOffer[offer].count += 1; byOffer[offer].revenue += revenue;
+      bySource[src].count += 1; bySource[src].revenue += revenue;
     }
 
     const toRows = (obj: Record<string, { count: number; revenue: number }>) => Object.entries(obj).map(([label, value]) => ({ label, ...value })).sort((a, b) => b.revenue - a.revenue);
