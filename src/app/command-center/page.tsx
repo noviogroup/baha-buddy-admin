@@ -8,7 +8,7 @@ import { RevenueModule } from '@/components/revenue-module';
 import { AdminUsersModule } from '@/components/admin-users-module';
 import { HighIntentModule } from '@/components/high-intent-module';
 import { PlacesModule } from '@/components/places-module';
-import { PartnersModule } from '@/components/partners-module';
+import { PartnersModuleV2 } from '@/components/partners-module-v2';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
 export default function CommandCenterPage() {
@@ -70,7 +70,7 @@ export default function CommandCenterPage() {
     if (activeModule === 'admin-users') return <AdminUsersModule />;
     if (activeModule === 'high-intent') return <HighIntentModule />;
     if (activeModule === 'places') return <PlacesModule />;
-    if (activeModule === 'partners') return <PartnersModule />;
+    if (activeModule === 'partners') return <PartnersModuleV2 />;
 
     return <AdminModulePlaceholder moduleId={activeModule} />;
   };
