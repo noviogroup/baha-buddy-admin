@@ -26,6 +26,7 @@ export type AdminModuleId =
   | 'overview'
   | 'revenue'
   | 'bookings'
+  | 'concierge-orders'
   | 'travelers'
   | 'trips'
   | 'high-intent'
@@ -72,10 +73,11 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     id: 'operations',
     label: 'Operations',
-    description: 'Day-to-day traveler, trip, booking, and support operations.',
+    description: 'Day-to-day traveler, trip, booking, concierge, and support operations.',
     defaultOpen: true,
     items: [
       { id: 'bookings', label: 'Bookings', description: 'Flight, hotel, activity, restaurant, transfer, and service booking operations.', icon: <ClipboardList size={17} /> },
+      { id: 'concierge-orders', label: 'Concierge Orders', description: 'Paid concierge trip plan orders from Stripe Checkout, assignment, fulfillment, and delivery.', icon: <CreditCard size={17} />, badge: 'New' },
       { id: 'travelers', label: 'Travelers', description: 'User profiles, lifecycle, engagement, trips, bookings, and support context.', icon: <Users size={17} /> },
       { id: 'trips', label: 'Trips', description: 'Saved trips, itineraries, trip items, shared trips, and abandoned trip plans.', icon: <Compass size={17} /> },
       { id: 'support', label: 'Support', description: 'Support tickets, booking issues, user help, and internal follow-up.', icon: <HelpCircle size={17} /> },
