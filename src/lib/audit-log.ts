@@ -45,6 +45,9 @@ export type AuditEntityType =
   | 'support_ticket'
   | 'promo_code'
   | 'partner'
+  | 'partner_place'
+  | 'place'
+  | 'concierge_order'
   | 'admin_user'
   | 'api_credit_status';
 
@@ -58,7 +61,7 @@ export type AuditAction =
   // Trips
   | 'trip_status_changed' | 'trip_archived' | 'trip_name_changed' | 'trip_admin_note_added'
   // Bookings
-  | 'booking_cancelled' | 'booking_refunded' | 'booking_modified'
+  | 'booking_cancelled' | 'booking_refunded' | 'booking_modified' | 'booking_status_updated'
   | 'booking_noshow_marked' | 'goodwill_credit_issued'
   | 'booking_note_added' | 'email_resent'
   // UGC
@@ -68,8 +71,12 @@ export type AuditAction =
   | 'ticket_priority_changed' | 'ticket_admin_reply'
   // Content
   | 'sanity_picks_rotated' | 'google_places_resync' | 'google_places_entry_updated'
+  | 'place_updated'
+  // Concierge
+  | 'concierge_order_updated'
   // Partners / promos / keys / billing
   | 'partner_created' | 'partner_updated' | 'partner_status_changed'
+  | 'partner_place_linked' | 'partner_place_unlinked'
   | 'promo_created' | 'promo_deactivated' | 'promo_used_manually'
   | 'api_key_status_changed' | 'api_key_rotated'
   | 'billing_credit_updated';

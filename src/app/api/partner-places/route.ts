@@ -5,6 +5,14 @@ import { logAudit } from '@/lib/audit-log';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+type PartnerPlaceRow = {
+  id: string;
+  partner_id: string;
+  place_id: string;
+  relationship_type: string;
+  [key: string]: unknown;
+};
+
 export const GET = withAdminAuth(async (request, { supabase }) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -49,6 +57,9 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
       if (error.code === '23505') return NextResponse.json({ error: 'This partner is already linked to that place' }, { status: 409 });
       throw error;
     }
+    if (!data) throw new Error('Partner place link insert returned no row');
+
+    const link = data as PartnerPlaceRow;
 
     await logAudit({
       supabase,
@@ -56,12 +67,12 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
       request,
       action: 'partner_place_linked',
       entityType: 'partner_place',
-      entityId: data.id,
-      after: data,
+      entityId: link.id,
+      after: link,
       metadata: { partner_id: partnerId, place_id: placeId, relationship_type: relationshipType },
     });
 
-    return NextResponse.json({ success: true, link: data });
+    return NextResponse.json({ success: true, link });
   } catch (err: any) {
     console.error('Partner place link create error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -75,8 +86,10 @@ export const DELETE = withAdminAuth(async (request, { supabase, admin }) => {
 
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
-    const before = await supabase.from('partner_places').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase.from('partner_places').select('*').eq('id', id).single();
+    if (fetchError || !existing) return NextResponse.json({ error: fetchError?.message ?? 'Link not found' }, { status: 404 });
+
+    const beforeRow = existing as PartnerPlaceRow;
 
     const { error } = await supabase.from('partner_places').delete().eq('id', id);
     if (error) throw error;
@@ -88,7 +101,7 @@ export const DELETE = withAdminAuth(async (request, { supabase, admin }) => {
       action: 'partner_place_unlinked',
       entityType: 'partner_place',
       entityId: id,
-      before: before.data,
+      before: beforeRow,
     });
 
     return NextResponse.json({ success: true });

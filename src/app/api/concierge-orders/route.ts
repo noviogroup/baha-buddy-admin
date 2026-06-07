@@ -8,6 +8,16 @@ export const revalidate = 0;
 const VALID_STATUSES = ['paid', 'in_review', 'needs_info', 'in_progress', 'delivered', 'cancelled', 'refunded', 'payment_failed'];
 const VALID_PAYMENT_STATUSES = ['paid', 'unpaid', 'failed', 'refunded'];
 
+type ConciergeOrderRow = {
+  id: string;
+  status: string | null;
+  payment_status: string | null;
+  fulfillment_started_at: string | null;
+  delivered_at: string | null;
+  refunded_at: string | null;
+  [key: string]: unknown;
+};
+
 function num(value: unknown) {
   const n = typeof value === 'number' ? value : parseFloat(String(value ?? 0));
   return Number.isFinite(n) ? n : 0;
@@ -76,13 +86,15 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     const id = typeof body.id === 'string' ? body.id : '';
     if (!id) return NextResponse.json({ error: 'Concierge order id is required' }, { status: 400 });
 
-    const before = await supabase.from('concierge_orders').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase.from('concierge_orders').select('*').eq('id', id).single();
+    if (fetchError || !existing) return NextResponse.json({ error: fetchError?.message ?? 'Concierge order not found' }, { status: 404 });
+
+    const beforeRow = existing as ConciergeOrderRow;
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (typeof body.status === 'string' && VALID_STATUSES.includes(body.status)) {
       updates.status = body.status;
-      if (body.status === 'in_progress' && !before.data.fulfillment_started_at) updates.fulfillment_started_at = new Date().toISOString();
+      if (body.status === 'in_progress' && !beforeRow.fulfillment_started_at) updates.fulfillment_started_at = new Date().toISOString();
       if (body.status === 'delivered') updates.delivered_at = new Date().toISOString();
       if (body.status === 'refunded') updates.refunded_at = new Date().toISOString();
     }
@@ -95,9 +107,11 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     const { data, error } = await supabase.from('concierge_orders').update(updates as never).eq('id', id).select('*').single();
     if (error) throw error;
 
-    await logAudit({ supabase, admin, request, action: 'concierge_order_updated', entityType: 'concierge_order', entityId: id, before: before.data, after: data, metadata: { updates } });
+    const afterRow = data as ConciergeOrderRow;
 
-    return NextResponse.json({ success: true, order: data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    await logAudit({ supabase, admin, request, action: 'concierge_order_updated', entityType: 'concierge_order', entityId: id, before: beforeRow, after: afterRow, metadata: { updates } });
+
+    return NextResponse.json({ success: true, order: afterRow }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (err: any) {
     console.error('Concierge order update error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

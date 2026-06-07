@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
 import { logAudit } from '@/lib/audit-log';
+import type { AdminUserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,21 +50,26 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     if (id === admin.id && nextActive === false) return NextResponse.json({ error: 'Cannot change your own active status' }, { status: 400 });
     if (id === admin.id && nextRole && nextRole !== 'super_admin') return NextResponse.json({ error: 'Cannot change your own super admin role' }, { status: 400 });
 
-    const before = await supabase.from('admin_users').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase.from('admin_users').select('*').eq('id', id).single();
+    if (fetchError || !existing) return NextResponse.json({ error: fetchError?.message ?? 'Admin user not found' }, { status: 404 });
+
+    const beforeRow = existing as AdminUserRow;
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (nextRole !== undefined) updates.role = nextRole;
     if (nextActive !== undefined) updates.active = Boolean(nextActive);
 
-    const after = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('admin_users')
       .update(updates as never)
       .eq('id', id)
       .select('*')
       .single();
 
-    if (after.error) throw after.error;
+    if (updateError) throw updateError;
+    if (!updated) throw new Error('Admin user update returned no row');
+
+    const afterRow = updated as AdminUserRow;
 
     await logAudit({
       supabase,
@@ -72,12 +78,12 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
       action: nextRole !== undefined ? 'admin_role_changed' : 'admin_removed',
       entityType: 'admin_user',
       entityId: id,
-      before: before.data,
-      after: after.data,
+      before: beforeRow,
+      after: afterRow,
       metadata: { updates },
     });
 
-    return NextResponse.json({ success: true, admin: after.data });
+    return NextResponse.json({ success: true, admin: afterRow });
   } catch (err: any) {
     console.error('Admin users update error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

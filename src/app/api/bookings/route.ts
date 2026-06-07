@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
 import { logAudit } from '@/lib/audit-log';
+import type { BookingRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -81,18 +82,29 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     if (!id) return NextResponse.json({ error: 'Booking id is required' }, { status: 400 });
     if (!['pending', 'confirmed', 'failed', 'cancelled', 'refunded'].includes(status)) return NextResponse.json({ error: 'Invalid booking status' }, { status: 400 });
 
-    const before = await supabase.from('bookings').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: fetchError?.message ?? 'Booking not found' }, { status: 404 });
+    }
+
+    const beforeRow = existing as BookingRow;
 
     const updates: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
-    if (status === 'confirmed' && !before.data.paid_at) updates.paid_at = new Date().toISOString();
+    if (status === 'confirmed' && !beforeRow.paid_at) updates.paid_at = new Date().toISOString();
 
     const { data, error } = await supabase.from('bookings').update(updates as never).eq('id', id).select('*').single();
     if (error) throw error;
 
-    await logAudit({ supabase, admin, request, action: 'booking_status_updated', entityType: 'booking', entityId: id, before: before.data, after: data, metadata: { updates } });
+    const afterRow = data as BookingRow;
 
-    return NextResponse.json({ success: true, booking: data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    await logAudit({ supabase, admin, request, action: 'booking_status_updated', entityType: 'booking', entityId: id, before: beforeRow, after: afterRow, metadata: { updates } });
+
+    return NextResponse.json({ success: true, booking: afterRow }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (err: any) {
     console.error('Booking update API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

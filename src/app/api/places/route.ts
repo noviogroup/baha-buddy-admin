@@ -5,6 +5,24 @@ import { logAudit } from '@/lib/audit-log';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+type PlaceRow = Record<string, unknown> & {
+  id: string;
+  name: string;
+  category: string | null;
+  is_verified: boolean | null;
+  is_active: boolean | null;
+  status: string | null;
+  primary_image_url: string | null;
+};
+
+type PartnerPlaceRow = {
+  id: string;
+  place_id: string;
+  partner_id: string;
+  relationship_type: string | null;
+  partners?: Record<string, unknown> | null;
+};
+
 export const GET = withAdminAuth(async (request, { supabase }) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -42,7 +60,7 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
         .select('id,place_id,partner_id,relationship_type,partners(id,name,status,tier,partner_type,is_featured,is_sponsored)')
         .in('place_id', placeIds);
 
-      for (const link of links || []) {
+      for (const link of (links || []) as PartnerPlaceRow[]) {
         partnerMap[link.place_id] = partnerMap[link.place_id] || [];
         partnerMap[link.place_id].push(link);
       }
@@ -67,8 +85,10 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     const id = typeof body.id === 'string' ? body.id : '';
     if (!id) return NextResponse.json({ error: 'Place id is required' }, { status: 400 });
 
-    const before = await supabase.from('places').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase.from('places').select('*').eq('id', id).single();
+    if (fetchError || !existing) return NextResponse.json({ error: fetchError?.message ?? 'Place not found' }, { status: 404 });
+
+    const beforeRow = existing as PlaceRow;
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (typeof body.is_verified === 'boolean') updates.is_verified = body.is_verified;
@@ -90,6 +110,8 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
 
     if (error) throw error;
 
+    const afterRow = data as PlaceRow;
+
     await logAudit({
       supabase,
       admin,
@@ -97,12 +119,12 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
       action: 'place_updated',
       entityType: 'place',
       entityId: id,
-      before: before.data,
-      after: data,
+      before: beforeRow,
+      after: afterRow,
       metadata: { updates, source: 'places_admin' },
     });
 
-    return NextResponse.json({ success: true, place: data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    return NextResponse.json({ success: true, place: afterRow }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (err: any) {
     console.error('Place update API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

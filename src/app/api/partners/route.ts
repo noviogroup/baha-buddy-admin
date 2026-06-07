@@ -103,8 +103,10 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     const id = typeof body.id === 'string' ? body.id : '';
     if (!id) return NextResponse.json({ error: 'Partner id is required' }, { status: 400 });
 
-    const before = await supabase.from('partners').select('*').eq('id', id).single();
-    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+    const { data: existing, error: fetchError } = await supabase.from('partners').select('*').eq('id', id).single();
+    if (fetchError || !existing) return NextResponse.json({ error: fetchError?.message ?? 'Partner not found' }, { status: 404 });
+
+    const beforeRow = existing as PartnerRow;
 
     const updates: Record<string, unknown> = {};
     if (typeof body.name === 'string' && body.name.trim()) updates.name = body.name.trim();
@@ -132,6 +134,8 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     if (error) throw error;
     if (!data) throw new Error('Partner update returned no row');
 
+    const afterRow = data as PartnerRow;
+
     await logAudit({
       supabase,
       admin,
@@ -139,12 +143,12 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
       action: 'partner_updated',
       entityType: 'partner',
       entityId: id,
-      before: before.data,
-      after: data,
+      before: beforeRow,
+      after: afterRow,
       metadata: { updates },
     });
 
-    return NextResponse.json({ success: true, partner: data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    return NextResponse.json({ success: true, partner: afterRow }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (err: any) {
     console.error('Partner update API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
