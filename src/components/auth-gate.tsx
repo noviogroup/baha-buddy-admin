@@ -3,6 +3,7 @@
 import { useAuth } from './auth-provider';
 import { LoginScreen } from './login-screen';
 import { Loader2 } from 'lucide-react';
+import { BrandLogo } from './brand-logo';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin, signOut } = useAuth();
@@ -11,7 +12,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center font-body">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={24} className="animate-spin text-zinc-400" />
+          <BrandLogo size={48} priority />
+          <Loader2 size={20} className="animate-spin text-brand-blue" />
           <span className="text-sm text-zinc-400">Loading...</span>
         </div>
       </div>

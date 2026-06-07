@@ -16,6 +16,7 @@ import {
 import { apiFetch } from '@/lib/api-client';
 import { useApi } from '@/lib/use-api';
 import { useRouter } from 'next/navigation';
+import { BrandLogo } from '@/components/brand-logo';
 
 interface Stats {
   totalUsers: number; newUsersToday: number; newUsersWeek: number;
@@ -1101,9 +1102,7 @@ export default function AdminDashboard() {
       <aside className="w-56 bg-sidebar-bg flex flex-col shrink-0 sticky top-0 h-screen">
         <div className="px-5 py-5 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-blue/20 flex items-center justify-center">
-              <span className="text-white text-lg font-display font-extrabold">B</span>
-            </div>
+            <BrandLogo size={36} className="shrink-0" />
             <div>
               <div className="text-white text-[15px] font-display font-semibold tracking-tight">Baha Buddy</div>
               <div className="text-zinc-500 text-[10px] tracking-widest font-medium">ADMIN</div>

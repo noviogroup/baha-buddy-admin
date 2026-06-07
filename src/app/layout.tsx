@@ -25,6 +25,10 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Baha Buddy Admin',
   description: 'Internal admin panel for Baha Buddy V2',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

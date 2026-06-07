@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from './auth-provider';
 import { Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import { BrandLogo } from './brand-logo';
 
 export function LoginScreen() {
   const { signIn } = useAuth();
@@ -30,9 +31,7 @@ export function LoginScreen() {
       <div className="w-full max-w-sm mx-auto px-6">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-zinc-900 flex items-center justify-center mb-4">
-            <span className="text-white text-2xl font-extrabold">B</span>
-          </div>
+          <BrandLogo size={56} className="mb-4" priority />
           <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">Baha Buddy Admin</h1>
           <p className="text-sm text-zinc-400 mt-1">Sign in to access the dashboard</p>
         </div>
@@ -80,7 +79,7 @@ export function LoginScreen() {
           <button
             type="submit"
             disabled={loading || !email.trim() || !password.trim()}
-            className="w-full py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+            className="w-full py-2.5 rounded-lg bg-brand-blue text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
           >
             {loading ? (
               <><Loader2 size={16} className="animate-spin" /> Signing in...</>
