@@ -59,59 +59,17 @@ STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_...
 
 `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_CONCIERGE_WEBHOOK_SECRET` must remain server-side only.
 
-## Localhost webhook testing without Stripe CLI
+## Real Stripe validation path
 
-The admin repo includes a local test script that sends a Stripe-style signed webhook payload to the local admin endpoint.
+Use Stripe test mode so the webhook receives real Stripe events and the admin queue reflects the actual payment flow.
 
-Start admin locally:
-
-```bash
-npm run dev
-```
-
-Make sure `.env.local` and the test command use the same webhook secret:
-
-```env
-STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret
-```
-
-In another terminal, run:
-
-```bash
-STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret npm run test:concierge-webhook
-```
-
-Default local endpoint:
-
-```txt
-http://localhost:3001/api/stripe/concierge-webhook
-```
-
-Optional overrides:
-
-```bash
-CONCIERGE_WEBHOOK_TEST_URL=http://localhost:3001/api/stripe/concierge-webhook \
-TEST_OFFER_ID=quick_review \
-TEST_SOURCE=local_test_button \
-TEST_TRAVELER_EMAIL=test@example.com \
-TEST_TRAVELER_NAME="Test Traveler" \
-STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret \
-npm run test:concierge-webhook
-```
-
-Expected result:
-
-```json
-{"received":true,"order_created":true}
-```
-
-Then open:
-
-```txt
-Command Center → Operations → Concierge Orders
-```
-
-You should see the local test order in the queue.
+1. Deploy the admin portal with `STRIPE_CONCIERGE_WEBHOOK_SECRET` set.
+2. In Stripe, add the deployed admin webhook URL.
+3. Enable `checkout.session.completed`, `payment_intent.payment_failed`, and `charge.refunded`.
+4. Complete a test purchase from `/concierge-trip-plan` in the web app.
+5. Confirm Stripe shows the event delivered successfully.
+6. Confirm a row appears in `concierge_orders`.
+7. Confirm the order appears in `Command Center → Operations → Concierge Orders`.
 
 ## Database objects
 
