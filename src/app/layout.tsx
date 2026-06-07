@@ -1,26 +1,18 @@
 import type { Metadata } from 'next';
-import { Fraunces, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
 import { AuthGate } from '@/components/auth-gate';
 
 export const dynamic = 'force-dynamic';
 
-// ─── Brand fonts (loaded once at the edge, attached as CSS variables) ───
-// These variables are consumed by tailwind.config.js (font-display / font-body / font-mono)
-// and by globals.css.
-const fraunces = Fraunces({
+// ─── Admin fonts ───────────────────────────────────────────────
+// Inter keeps the admin panel clean, neutral, and product-grade.
+// JetBrains Mono is reserved for IDs, refs, code, and technical values.
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-fraunces',
-  axes: ['SOFT', 'WONK', 'opsz'],
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-dm-sans',
-  weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
 });
 
 const jetbrains = JetBrains_Mono({
@@ -37,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <body>
         <AuthProvider>
           <AuthGate>
