@@ -59,6 +59,60 @@ STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_...
 
 `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_CONCIERGE_WEBHOOK_SECRET` must remain server-side only.
 
+## Localhost webhook testing without Stripe CLI
+
+The admin repo includes a local test script that sends a Stripe-style signed webhook payload to the local admin endpoint.
+
+Start admin locally:
+
+```bash
+npm run dev
+```
+
+Make sure `.env.local` and the test command use the same webhook secret:
+
+```env
+STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret
+```
+
+In another terminal, run:
+
+```bash
+STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret npm run test:concierge-webhook
+```
+
+Default local endpoint:
+
+```txt
+http://localhost:3001/api/stripe/concierge-webhook
+```
+
+Optional overrides:
+
+```bash
+CONCIERGE_WEBHOOK_TEST_URL=http://localhost:3001/api/stripe/concierge-webhook \
+TEST_OFFER_ID=quick_review \
+TEST_SOURCE=local_test_button \
+TEST_TRAVELER_EMAIL=test@example.com \
+TEST_TRAVELER_NAME="Test Traveler" \
+STRIPE_CONCIERGE_WEBHOOK_SECRET=whsec_local_test_secret \
+npm run test:concierge-webhook
+```
+
+Expected result:
+
+```json
+{"received":true,"order_created":true}
+```
+
+Then open:
+
+```txt
+Command Center → Operations → Concierge Orders
+```
+
+You should see the local test order in the queue.
+
 ## Database objects
 
 The admin flow uses:
