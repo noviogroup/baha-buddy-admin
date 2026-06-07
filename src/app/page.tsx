@@ -1,1 +1,3 @@
-REPLACE_FILE_WITH_PATCH_NOT_SUPPORTED
+import CommandCenterPage from './command-center/page';
+
+export default CommandCenterPage;
