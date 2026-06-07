@@ -6,54 +6,61 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ─── Brand ───────────────────────────────────────────────
+        // ─── Baha Buddy Brand ────────────────────────────────────
+        // Brighter Bahamian palette: ocean blue, aqua, sun gold,
+        // clean sand surfaces. Designed to feel tourism-forward,
+        // not dark enterprise-template.
         brand: {
-          DEFAULT: '#2E78D2',
-          blue: '#2E78D2',
-          'blue-dark': '#1E5BA8',
-          'blue-light': '#EAF2FB',
-          gold: '#F5B731',
-          'gold-light': '#FEF8E6',
+          DEFAULT: '#0077C8',
+          blue: '#0077C8',
+          'blue-dark': '#005EA8',
+          'blue-light': '#E5F5FF',
+          aqua: '#00AEEF',
+          'aqua-light': '#DFF8FF',
+          gold: '#FDBB30',
+          'gold-light': '#FFF4D6',
+          sand: '#FFF8EA',
+          coral: '#FF7A59',
         },
         // ─── Semantic neutrals ──────────────────────────────────
-        ink: '#18181B',      // Primary text / strong UI
-        body: '#3F3F46',     // Default body text
-        muted: '#71717A',    // Captions, timestamps
-        hairline: '#E4E4E7', // Borders, dividers
-        surface: '#FAFAFA',  // Card / row alt bg
-        // ─── Sidebar (warmer navy than V1 zinc) ─────────────────
+        ink: '#102033',      // Primary text / strong UI
+        body: '#34495E',     // Default body text
+        muted: '#6B7A90',    // Captions, timestamps
+        hairline: '#DDEAF4', // Borders, dividers
+        surface: '#F4FAFF',  // Card / row alt bg
+        // ─── Sidebar: light command center, branded not bland ───
         sidebar: {
-          bg: '#0F1B2E',
-          hover: '#172538',
-          active: 'rgba(46,120,210,0.16)',
-          accent: '#2E78D2',
+          bg: '#F7FCFF',
+          hover: '#E5F5FF',
+          active: '#DFF4FF',
+          accent: '#0077C8',
+          border: '#D6ECFA',
+          text: '#17324D',
+          muted: '#6B7A90',
         },
         // ─── Status palette ─────────────────────────────────────
         status: {
-          success: '#16A34A',
-          'success-bg': '#DCFCE7',
-          warning: '#CA8A04',
-          'warning-bg': '#FEF9C3',
+          success: '#0E9F6E',
+          'success-bg': '#DDFBEF',
+          warning: '#B7791F',
+          'warning-bg': '#FFF4D6',
           danger: '#DC2626',
           'danger-bg': '#FEE2E2',
-          info: '#3730A3',
-          'info-bg': '#E0E7FF',
+          info: '#0077C8',
+          'info-bg': '#E5F5FF',
         },
-        // ─── Legacy aliases (keep until page.tsx full rebrand pass) ───
-        accent: '#2E78D2',
+        // ─── Legacy aliases ─────────────────────────────────────
+        accent: '#00AEEF',
       },
       fontFamily: {
-        // CSS variables are wired up in layout.tsx via next/font/google.
-        // Inter = admin UI, headings, tables, forms, KPI values
-        // JetBrains = UUIDs, code, refs, technical identifiers
         display: ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         body:    ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono:    ['var(--font-jetbrains)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
         sans:    ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
-        card:  '0 1px 2px rgba(24,24,27,0.04), 0 1px 1px rgba(24,24,27,0.02)',
-        focus: '0 0 0 3px rgba(46,120,210,0.20)',
+        card:  '0 8px 24px rgba(0, 119, 200, 0.06), 0 1px 2px rgba(16, 32, 51, 0.04)',
+        focus: '0 0 0 3px rgba(0, 174, 239, 0.22)',
       },
       borderRadius: {
         xl: '0.75rem',
