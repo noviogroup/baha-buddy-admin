@@ -44,13 +44,12 @@ module.exports = {
       },
       fontFamily: {
         // CSS variables are wired up in layout.tsx via next/font/google.
-        // Fraunces  = display (h1, KPI numbers)
-        // DM Sans   = body (paragraphs, tables, UI)
-        // JetBrains = mono (UUIDs, code, refs)
-        display: ['var(--font-fraunces)', 'Georgia', 'serif'],
-        body:    ['var(--font-dm-sans)', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        // Inter = admin UI, headings, tables, forms, KPI values
+        // JetBrains = UUIDs, code, refs, technical identifiers
+        display: ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        body:    ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono:    ['var(--font-jetbrains)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
-        sans:    ['var(--font-dm-sans)', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans:    ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
         card:  '0 1px 2px rgba(24,24,27,0.04), 0 1px 1px rgba(24,24,27,0.02)',
