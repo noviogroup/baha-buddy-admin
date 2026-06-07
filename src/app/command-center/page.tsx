@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Bell, RefreshCw } from 'lucide-react';
 import { AdminSidebarV2 } from '@/components/admin-sidebar-v2';
 import { AdminModulePlaceholder } from '@/components/admin-module-placeholder';
+import { RevenueModule } from '@/components/revenue-module';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
 export default function CommandCenterPage() {
@@ -47,9 +48,9 @@ export default function CommandCenterPage() {
               <div className="text-[11px] text-muted mt-1">Grouped into 4 sections</div>
             </div>
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card">
-              <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Next build</div>
+              <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">First live module</div>
               <div className="text-2xl font-display font-bold text-ink">Revenue</div>
-              <div className="text-[11px] text-muted mt-1">Summary API + cards</div>
+              <div className="text-[11px] text-muted mt-1">Summary API + live cards</div>
             </div>
             <div className="bg-white rounded-xl p-4 border border-hairline shadow-card">
               <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Foundation gate</div>
@@ -59,6 +60,10 @@ export default function CommandCenterPage() {
           </div>
         </div>
       );
+    }
+
+    if (activeModule === 'revenue') {
+      return <RevenueModule />;
     }
 
     return <AdminModulePlaceholder moduleId={activeModule} />;
