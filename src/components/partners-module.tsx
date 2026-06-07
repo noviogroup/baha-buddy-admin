@@ -1,6 +1,8 @@
 'use client';
 
-import { AlertTriangle, BriefcaseBusiness, Handshake, MapPinned, Target } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, BriefcaseBusiness, Handshake, MapPinned, Plus, Target, X } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 import { useApi } from '@/lib/use-api';
 
 type PartnerRow = {
@@ -52,7 +54,45 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function PartnersModule() {
-  const { data, loading, error } = useApi<PartnersResponse>('/api/partners/summary');
+  const { data, loading, error, reload } = useApi<PartnersResponse>('/api/partners/summary');
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: '',
+    partner_type: 'vendor',
+    tier: 'standard',
+    status: 'prospect',
+    island_name: '',
+    contact_name: '',
+    contact_email: '',
+    website: '',
+  });
+
+  const submitPartner = async () => {
+    if (!form.name.trim()) {
+      alert('Partner name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiFetch('/api/partners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Create failed: ${res.status}`);
+      }
+      setForm({ name: '', partner_type: 'vendor', tier: 'standard', status: 'prospect', island_name: '', contact_name: '', contact_email: '', website: '' });
+      setShowForm(false);
+      await reload();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return <div className="bg-white rounded-xl border border-hairline p-6 shadow-card"><div className="skeleton h-6 w-48 mb-4" /><div className="skeleton h-28 w-full" /></div>;
@@ -80,11 +120,39 @@ export function PartnersModule() {
               Manage hotels, restaurants, tour operators, transportation providers, guides, sponsors, campaigns, referrals, and linked canonical places.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue bg-brand-blue-light px-3 py-1 rounded-full">
-            <Handshake size={13} /> Foundation live
-          </span>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-blue px-3 py-1.5 rounded-lg hover:bg-brand-blue-dark">
+            <Plus size={13} /> Add Partner
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <div className="bg-white rounded-xl border border-hairline p-5 shadow-card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-ink">Create partner</h3>
+            <button onClick={() => setShowForm(false)} className="text-muted hover:text-ink"><X size={16} /></button>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Partner name" className="border border-hairline rounded-lg px-3 py-2 text-sm" />
+            <select value={form.partner_type} onChange={e => setForm({ ...form, partner_type: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="vendor">Vendor</option><option value="hotel">Hotel</option><option value="restaurant">Restaurant</option><option value="tour_operator">Tour Operator</option><option value="transportation">Transportation</option><option value="guide">Guide</option><option value="attraction">Attraction</option><option value="sponsor">Sponsor</option>
+            </select>
+            <select value={form.tier} onChange={e => setForm({ ...form, tier: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="free">Free</option><option value="standard">Standard</option><option value="featured">Featured</option><option value="premium">Premium</option><option value="sponsor">Sponsor</option>
+            </select>
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="prospect">Prospect</option><option value="active">Active</option><option value="paused">Paused</option>
+            </select>
+            <input value={form.island_name} onChange={e => setForm({ ...form, island_name: e.target.value })} placeholder="Island" className="border border-hairline rounded-lg px-3 py-2 text-sm" />
+            <input value={form.contact_name} onChange={e => setForm({ ...form, contact_name: e.target.value })} placeholder="Contact name" className="border border-hairline rounded-lg px-3 py-2 text-sm" />
+            <input value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} placeholder="Contact email" className="border border-hairline rounded-lg px-3 py-2 text-sm" />
+            <input value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} placeholder="Website" className="border border-hairline rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="flex justify-end mt-4">
+            <button onClick={submitPartner} disabled={saving} className="px-4 py-2 rounded-lg bg-brand-blue text-white text-sm font-semibold hover:bg-brand-blue-dark disabled:opacity-60">{saving ? 'Saving…' : 'Create Partner'}</button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-3">
         <Stat icon={<BriefcaseBusiness size={18} />} label="Partners" value={s.total || 0} sub={`${s.active || 0} active · ${s.prospect || 0} prospects`} />
@@ -96,37 +164,17 @@ export function PartnersModule() {
       {data.partners.length === 0 && (
         <div className="bg-brand-gold-light border border-brand-gold/30 rounded-xl p-4 text-sm text-status-warning">
           <div className="font-semibold mb-1">Partner tables are ready</div>
-          <p>No partner records exist yet. The next step is partner onboarding/import, then linking partners to canonical places.</p>
+          <p>No partner records exist yet. Use Add Partner to start onboarding prospects.</p>
         </div>
       )}
 
       <div className="bg-white rounded-xl border border-hairline overflow-hidden shadow-card">
-        <div className="px-5 py-3 border-b border-hairline">
-          <h3 className="text-sm font-semibold text-ink tracking-tight">Partner roster</h3>
-        </div>
+        <div className="px-5 py-3 border-b border-hairline"><h3 className="text-sm font-semibold text-ink tracking-tight">Partner roster</h3></div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-hairline bg-surface/50">
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Partner</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Type</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Tier</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Status</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Places</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Leads</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-hairline bg-surface/50"><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Partner</th><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Type</th><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Tier</th><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Status</th><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Places</th><th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Leads</th></tr></thead>
             <tbody>
-              {data.partners.map(partner => (
-                <tr key={partner.id} className="border-b border-hairline last:border-0 hover:bg-surface/50">
-                  <td className="px-4 py-3"><div className="font-semibold text-ink">{partner.name}</div><div className="text-[11px] text-muted">{partner.island_name || 'No island assigned'}</div></td>
-                  <td className="px-4 py-3 capitalize text-body">{partner.partner_type?.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-3 capitalize text-body">{partner.tier}</td>
-                  <td className="px-4 py-3"><StatusBadge status={partner.status} /></td>
-                  <td className="px-4 py-3 text-body">{partner.linked_places || 0}</td>
-                  <td className="px-4 py-3 text-body">{partner.total_leads || 0}</td>
-                </tr>
-              ))}
+              {data.partners.map(partner => (<tr key={partner.id} className="border-b border-hairline last:border-0 hover:bg-surface/50"><td className="px-4 py-3"><div className="font-semibold text-ink">{partner.name}</div><div className="text-[11px] text-muted">{partner.island_name || 'No island assigned'}</div></td><td className="px-4 py-3 capitalize text-body">{partner.partner_type?.replace(/_/g, ' ')}</td><td className="px-4 py-3 capitalize text-body">{partner.tier}</td><td className="px-4 py-3"><StatusBadge status={partner.status} /></td><td className="px-4 py-3 text-body">{partner.linked_places || 0}</td><td className="px-4 py-3 text-body">{partner.total_leads || 0}</td></tr>))}
               {data.partners.length === 0 && <tr><td colSpan={6} className="px-4 py-12 text-center text-muted">No partners yet.</td></tr>}
             </tbody>
           </table>
