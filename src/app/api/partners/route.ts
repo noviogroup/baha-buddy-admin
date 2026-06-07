@@ -3,6 +3,7 @@ import { withAdminAuth } from '@/lib/admin-auth';
 import { logAudit } from '@/lib/audit-log';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function slugify(value: string) {
   return value
@@ -35,6 +36,10 @@ type PartnerRow = {
   created_at?: string;
   updated_at?: string;
 };
+
+function cleanText(value: unknown) {
+  return typeof value === 'string' ? value.trim() || null : undefined;
+}
 
 export const POST = withAdminAuth(async (request, { supabase, admin }) => {
   try {
@@ -88,6 +93,60 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
     return NextResponse.json({ success: true, partner });
   } catch (err: any) {
     console.error('Partner create API error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}, { requireRole: 'admin' });
+
+export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
+  try {
+    const body = await request.json();
+    const id = typeof body.id === 'string' ? body.id : '';
+    if (!id) return NextResponse.json({ error: 'Partner id is required' }, { status: 400 });
+
+    const before = await supabase.from('partners').select('*').eq('id', id).single();
+    if (before.error) return NextResponse.json({ error: before.error.message }, { status: 404 });
+
+    const updates: Record<string, unknown> = {};
+    if (typeof body.name === 'string' && body.name.trim()) updates.name = body.name.trim();
+    if (VALID_TYPES.includes(body.partner_type)) updates.partner_type = body.partner_type;
+    if (VALID_TIERS.includes(body.tier)) updates.tier = body.tier;
+    if (VALID_STATUSES.includes(body.status)) updates.status = body.status;
+
+    const textFields = ['contact_name', 'contact_email', 'contact_phone', 'website', 'island_name', 'description'];
+    for (const field of textFields) {
+      const value = cleanText(body[field]);
+      if (value !== undefined) updates[field] = value;
+    }
+
+    if (typeof body.is_featured === 'boolean') updates.is_featured = body.is_featured;
+    if (typeof body.is_sponsored === 'boolean') updates.is_sponsored = body.is_sponsored;
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('partners')
+      .update(updates as never)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error('Partner update returned no row');
+
+    await logAudit({
+      supabase,
+      admin,
+      request,
+      action: 'partner_updated',
+      entityType: 'partner',
+      entityId: id,
+      before: before.data,
+      after: data,
+      metadata: { updates },
+    });
+
+    return NextResponse.json({ success: true, partner: data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+  } catch (err: any) {
+    console.error('Partner update API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }, { requireRole: 'admin' });
