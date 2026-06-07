@@ -3,6 +3,31 @@ import { withAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
+type PlaceSummaryRow = {
+  id: string;
+  name: string;
+  category: string | null;
+  island_name: string | null;
+  status: string | null;
+  is_active: boolean | null;
+  is_verified: boolean | null;
+  is_partner: boolean | null;
+  primary_image_url: string | null;
+  rating: number | null;
+  review_count: number | null;
+  source_priority: string | null;
+  updated_at: string | null;
+};
+
+type PlaceSourceRow = {
+  id: string;
+  place_id: string;
+  source: string | null;
+  source_table: string | null;
+  source_location_id: string | null;
+  last_synced_at: string | null;
+};
+
 export const GET = withAdminAuth(async (_request, { supabase }) => {
   try {
     const { data: places, error: placesError } = await supabase
@@ -20,8 +45,8 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
 
     if (sourcesError) throw sourcesError;
 
-    const rows = places || [];
-    const sourceRows = sources || [];
+    const rows = (places || []) as PlaceSummaryRow[];
+    const sourceRows = (sources || []) as PlaceSourceRow[];
 
     const byCategory: Record<string, number> = {};
     const byIsland: Record<string, number> = {};
@@ -36,10 +61,10 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
       bySource[source.source || 'unknown'] = (bySource[source.source || 'unknown'] || 0) + 1;
     }
 
-    const missingImages = rows.filter((p: any) => !p.primary_image_url).length;
-    const unverified = rows.filter((p: any) => !p.is_verified).length;
-    const hidden = rows.filter((p: any) => !p.is_active || p.status !== 'active').length;
-    const partners = rows.filter((p: any) => p.is_partner).length;
+    const missingImages = rows.filter(p => !p.primary_image_url).length;
+    const unverified = rows.filter(p => !p.is_verified).length;
+    const hidden = rows.filter(p => !p.is_active || p.status !== 'active').length;
+    const partners = rows.filter(p => p.is_partner).length;
 
     return NextResponse.json({
       summary: {

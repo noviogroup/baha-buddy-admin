@@ -17,6 +17,25 @@ const VALID_TYPES = ['hotel', 'restaurant', 'tour_operator', 'transportation', '
 const VALID_TIERS = ['free', 'standard', 'featured', 'premium', 'sponsor'];
 const VALID_STATUSES = ['prospect', 'active', 'paused', 'churned', 'archived'];
 
+type PartnerRow = {
+  id: string;
+  name: string;
+  slug: string;
+  partner_type: string;
+  tier: string;
+  status: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  website: string | null;
+  island_name: string | null;
+  description: string | null;
+  is_featured: boolean;
+  is_sponsored: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export const POST = withAdminAuth(async (request, { supabase, admin }) => {
   try {
     const body = await request.json();
@@ -51,6 +70,9 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
       .single();
 
     if (error) throw error;
+    if (!data) throw new Error('Partner insert returned no row');
+
+    const partner = data as PartnerRow;
 
     await logAudit({
       supabase,
@@ -58,12 +80,12 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
       request,
       action: 'partner_created',
       entityType: 'partner',
-      entityId: data.id,
-      after: data,
+      entityId: partner.id,
+      after: partner,
       metadata: { source: 'admin_command_center' },
     });
 
-    return NextResponse.json({ success: true, partner: data });
+    return NextResponse.json({ success: true, partner });
   } catch (err: any) {
     console.error('Partner create API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
