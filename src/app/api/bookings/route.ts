@@ -5,7 +5,7 @@ import { logAudit } from '@/lib/audit-log';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function money(value: unknown) {
+function num(value: unknown) {
   const n = typeof value === 'number' ? value : parseFloat(String(value ?? 0));
   return Number.isFinite(n) ? n : 0;
 }
@@ -16,52 +16,57 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
     const status = (searchParams.get('status') || 'all').trim();
     const type = (searchParams.get('type') || 'all').trim();
     const provider = (searchParams.get('provider') || 'all').trim();
+    const payoutStatus = (searchParams.get('payout_status') || 'all').trim();
     const limit = Math.min(Number(searchParams.get('limit') || 100), 250);
 
     let query = supabase
-      .from('bookings')
-      .select('id,user_id,trip_id,booking_type,reference_id,provider,amount,currency,status,created_at,updated_at,stripe_payment_intent_id,paid_at')
+      .from('v_booking_financials')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (status !== 'all') query = query.eq('status', status);
     if (type !== 'all') query = query.eq('booking_type', type);
     if (provider !== 'all') query = query.eq('provider', provider);
+    if (payoutStatus !== 'all') query = query.eq('payout_status', payoutStatus);
 
     const { data, error } = await query;
     if (error) throw error;
 
     const rows = data || [];
     const summary = rows.reduce((acc: Record<string, number>, row: any) => {
-      const amount = money(row.amount);
+      const gross = num(row.gross_booking_value);
+      const net = num(row.net_revenue);
+      const payout = num(row.partner_payout_amount);
+      const margin = num(row.gross_margin_after_payout);
       const rowStatus = row.status || 'unknown';
       acc.total += 1;
-      acc.grossBookingValue += amount;
+      acc.grossBookingValue += gross;
+      acc.netRevenue += net;
+      acc.confirmedRevenue += rowStatus === 'confirmed' || row.paid_at ? net : 0;
+      acc.partnerPayouts += payout;
+      acc.marginAfterPayout += margin;
       acc[rowStatus] = (acc[rowStatus] || 0) + 1;
-      if (rowStatus === 'confirmed' || row.paid_at) acc.confirmedRevenue += amount;
+      if (row.payout_status === 'pending') acc.pendingPayouts += payout;
+      if (row.payout_status === 'paid') acc.paidPayouts += payout;
       return acc;
-    }, { total: 0, grossBookingValue: 0, confirmedRevenue: 0, confirmed: 0, pending: 0, failed: 0, cancelled: 0, refunded: 0 });
+    }, {
+      total: 0,
+      grossBookingValue: 0,
+      netRevenue: 0,
+      confirmedRevenue: 0,
+      partnerPayouts: 0,
+      marginAfterPayout: 0,
+      pendingPayouts: 0,
+      paidPayouts: 0,
+      confirmed: 0,
+      pending: 0,
+      failed: 0,
+      cancelled: 0,
+      refunded: 0,
+    });
 
-    const byType: Record<string, { count: number; gross: number }> = {};
-    const byProvider: Record<string, { count: number; gross: number }> = {};
-    const byStatus: Record<string, { count: number; gross: number }> = {};
-
-    for (const row of rows as any[]) {
-      const amount = money(row.amount);
-      const rowType = row.booking_type || 'unknown';
-      const rowProvider = row.provider || 'unknown';
-      const rowStatus = row.status || 'unknown';
-      byType[rowType] = byType[rowType] || { count: 0, gross: 0 };
-      byProvider[rowProvider] = byProvider[rowProvider] || { count: 0, gross: 0 };
-      byStatus[rowStatus] = byStatus[rowStatus] || { count: 0, gross: 0 };
-      byType[rowType].count += 1; byType[rowType].gross += amount;
-      byProvider[rowProvider].count += 1; byProvider[rowProvider].gross += amount;
-      byStatus[rowStatus].count += 1; byStatus[rowStatus].gross += amount;
-    }
-
-    const toRows = (obj: Record<string, { count: number; gross: number }>) => Object.entries(obj).map(([label, value]) => ({ label, ...value })).sort((a, b) => b.gross - a.gross);
-
-    return NextResponse.json({ bookings: rows, summary, byType: toRows(byType), byProvider: toRows(byProvider), byStatus: toRows(byStatus) }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    return NextResponse.json({ bookings: rows, summary }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (err: any) {
     console.error('Bookings API error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
