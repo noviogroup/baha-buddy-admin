@@ -12,6 +12,7 @@ import {
   FileText,
   HelpCircle,
   Home,
+  Image,
   MapPinned,
   MessageSquare,
   Plane,
@@ -34,6 +35,7 @@ export type AdminModuleId =
   | 'high-intent'
   | 'places'
   | 'partners'
+  | 'default-media-library'
   | 'destination-intelligence'
   | 'content-performance'
   | 'chat'
@@ -90,11 +92,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     id: 'marketplace',
     label: 'Marketplace',
-    description: 'Supply, places, partners, campaigns, and content performance.',
+    description: 'Supply, places, partners, campaigns, content, and default media.',
     defaultOpen: true,
     items: [
       { id: 'places', label: 'Places', description: 'Canonical hotels, restaurants, attractions, activities, beaches, and source records.', icon: <MapPinned size={17} />, badge: 'New' },
       { id: 'partners', label: 'Partners', description: 'Partner profiles, tiers, leads, bookings, campaigns, commissions, and performance.', icon: <BriefcaseBusiness size={17} />, badge: 'New' },
+      { id: 'default-media-library', label: 'Default Media Library', description: 'Fallback header images for pages, islands, itineraries, business types, and empty states.', icon: <Image size={17} />, badge: 'New' },
       { id: 'content-performance', label: 'Content Performance', description: 'Articles, tips, deals, social videos, traveler stories, and conversion attribution.', icon: <FileText size={17} />, badge: 'New' },
     ],
   },
