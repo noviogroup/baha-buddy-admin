@@ -9,7 +9,7 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
 
   let query = supabase
     .from('cruise_itineraries')
-    .select('*', { count: 'exact' })
+    .select('*, cruise_itinerary_stops(count)', { count: 'exact' })
     .order('updated_at', { ascending: false });
 
   if (status) query = query.eq('status', status);
@@ -20,5 +20,10 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ plans: data || [], total: count || 0 });
+  const plans = (data || []).map((plan: any) => ({
+    ...plan,
+    stop_count: plan.cruise_itinerary_stops?.[0]?.count || 0,
+  }));
+
+  return NextResponse.json({ plans, total: count || 0 });
 });
