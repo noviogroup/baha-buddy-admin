@@ -46,6 +46,7 @@ export const POST = withAdminAuth(async (request, { supabase }) => {
     latitude: body.latitude,
     longitude: body.longitude,
     google_place_id: body.google_place_id || null,
+    tripadvisor_location_id: body.tripadvisor_location_id || null,
     suggested_arrival_offset_minutes: body.suggested_arrival_offset_minutes ?? null,
     suggested_duration_minutes: body.suggested_duration_minutes || 20,
     description: body.description || null,
