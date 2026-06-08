@@ -67,7 +67,7 @@ export const POST = withAdminAuth(async (request, { supabase }) => {
 
   const { data, error } = await supabase
     .from('cruise_itinerary_stops')
-    .insert(payload)
+    .insert(payload as never)
     .select('*')
     .single();
 

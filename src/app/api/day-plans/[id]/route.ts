@@ -68,7 +68,7 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
 
   const { data, error } = await supabase
     .from('cruise_itineraries')
-    .update({ ...payload, updated_by: admin.id })
+    .update({ ...payload, updated_by: admin.id } as never)
     .eq('id', id)
     .select('*')
     .single();

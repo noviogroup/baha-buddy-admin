@@ -50,7 +50,7 @@ export const PATCH = withAdminAuth(async (request, { supabase }) => {
 
   const { data, error } = await supabase
     .from('cruise_itinerary_stops')
-    .update(payload)
+    .update(payload as never)
     .eq('id', stopId)
     .select('*')
     .single();
