@@ -3,14 +3,16 @@ import { withAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-type Context = {
-  params: Promise<{ id: string }>;
-};
-
-export const PATCH = withAdminAuth(async (request, { supabase, admin }, context?: Context) => {
-  const { id } = await context!.params;
+export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const id = parts[parts.length - 2];
   const body = await request.json();
   const status = body.status;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing plan id' }, { status: 400 });
+  }
 
   if (!['draft', 'review', 'published', 'archived'].includes(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
