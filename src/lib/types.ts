@@ -24,6 +24,7 @@ export interface Database {
       admin_audit_log: { Row: AdminAuditLogRow; Insert: Partial<AdminAuditLogRow> & Pick<AdminAuditLogRow, 'admin_email' | 'action' | 'entity_type'>; Update: never; Relationships: [] };
       admin_notes: { Row: AdminNoteRow; Insert: Partial<AdminNoteRow> & Pick<AdminNoteRow, 'admin_id' | 'admin_email' | 'entity_type' | 'entity_id' | 'body'>; Update: Partial<AdminNoteRow>; Relationships: [] };
       pii_access_log: { Row: PiiAccessLogRow; Insert: Partial<PiiAccessLogRow> & Pick<PiiAccessLogRow, 'admin_email' | 'entity_type' | 'entity_id' | 'field' | 'reason'>; Update: never; Relationships: [] };
+      default_header_images: { Row: DefaultHeaderImageRow; Insert: Partial<DefaultHeaderImageRow> & Pick<DefaultHeaderImageRow, 'title' | 'header_type' | 'scope_key' | 'desktop_image_url' | 'alt_text'>; Update: Partial<DefaultHeaderImageRow>; Relationships: [] };
     };
     Views: {
       ai_daily_costs: { Row: AiDailyCostRow; Relationships: [] };
@@ -81,289 +82,57 @@ export interface TripRow {
   updated_at: string;
 }
 
-export interface ChatThreadRow {
-  id: string;
-  trip_id: string | null;
-  user_id: string;
-  last_message_preview: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ChatMessageRow {
-  id: string;
-  thread_id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  card_type: 'none' | 'destination' | 'hotel' | 'flight' | 'dayPlan' | 'activity' | 'map' | 'summary' | 'payment' | 'mixed';
-  card_data: Record<string, unknown> | null;
-  created_at: string;
-}
-
-export interface TripAccommodationRow {
-  id: string;
-  trip_id: string;
-  place_id: string | null;
-  name: string;
-  island: string | null;
-  check_in: string | null;
-  check_out: string | null;
-  price_per_night: number | null;
-  guests: number | null;
-  booking_reference: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TripFlightRow {
-  id: string;
-  trip_id: string;
-  origin: string;
-  destination: string;
-  departure_at: string | null;
-  arrival_at: string | null;
-  airline: string | null;
-  booking_reference: string | null;
-  price: number | null;
-  duffel_offer_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TripActivityRow {
-  id: string;
-  trip_id: string;
-  day_number: number;
-  time_slot: 'morning' | 'afternoon' | 'evening';
-  activity_name: string;
-  activity_type: string | null;
-  place_id: string | null;
-  notes: string | null;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TripCollaboratorRow {
-  id: string;
-  trip_id: string;
-  user_id: string;
-  role: 'owner' | 'editor' | 'viewer';
-  invited_at: string;
-  accepted_at: string | null;
-}
-
-export interface BookingRow {
-  id: string;
-  user_id: string;
-  trip_id: string | null;
-  booking_type: string;
-  reference_id: string | null;
-  provider: string | null;
-  status: 'pending' | 'confirmed' | 'failed' | 'cancelled' | 'refunded';
-  amount: number | null;
-  currency: string;
-  stripe_payment_intent_id: string | null;
-  paid_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AiUsageLogRow {
-  id: string;
-  user_id: string | null;
-  thread_id: string | null;
-  model: string;
-  input_tokens: number;
-  output_tokens: number;
-  estimated_cost_usd: number;
-  created_at: string;
-}
-
-export interface UserDocumentRow {
-  id: string;
-  user_id: string;
-  document_type: 'passport' | 'visa' | 'insurance' | 'other';
-  encrypted_payload: string | null;
-  reminder_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserPaymentRow {
-  id: string;
-  user_id: string;
-  stripe_customer_id: string | null;
-  stripe_payment_method_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UgcContentRow {
-  id: string;
-  user_id: string;
-  trip_id: string | null;
-  content_type: 'video' | 'photo' | 'story';
-  storage_path: string;
-  caption: string | null;
-  moderation_status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  updated_at: string;
-}
-
-export interface GooglePlaceRow {
-  id: string;
-  place_id: string;
-  name: string;
-  type: string | null;
-  island: string | null;
-  rating: number | null;
-  photo_url: string | null;
-  description: string | null;
-  amenities: string[] | null;
-  cuisine_type: string | null;
-  vibe_tags: string[] | null;
-  kid_friendly: boolean;
-}
+export interface ChatThreadRow { id: string; trip_id: string | null; user_id: string; last_message_preview: string | null; created_at: string; updated_at: string; }
+export interface ChatMessageRow { id: string; thread_id: string; role: 'user' | 'assistant' | 'system'; content: string; card_type: 'none' | 'destination' | 'hotel' | 'flight' | 'dayPlan' | 'activity' | 'map' | 'summary' | 'payment' | 'mixed'; card_data: Record<string, unknown> | null; created_at: string; }
+export interface TripAccommodationRow { id: string; trip_id: string; place_id: string | null; name: string; island: string | null; check_in: string | null; check_out: string | null; price_per_night: number | null; guests: number | null; booking_reference: string | null; created_at: string; updated_at: string; }
+export interface TripFlightRow { id: string; trip_id: string; origin: string; destination: string; departure_at: string | null; arrival_at: string | null; airline: string | null; booking_reference: string | null; price: number | null; duffel_offer_id: string | null; created_at: string; updated_at: string; }
+export interface TripActivityRow { id: string; trip_id: string; day_number: number; time_slot: 'morning' | 'afternoon' | 'evening'; activity_name: string; activity_type: string | null; place_id: string | null; notes: string | null; sort_order: number; created_at: string; updated_at: string; }
+export interface TripCollaboratorRow { id: string; trip_id: string; user_id: string; role: 'owner' | 'editor' | 'viewer'; invited_at: string; accepted_at: string | null; }
+export interface BookingRow { id: string; user_id: string; trip_id: string | null; booking_type: string; reference_id: string | null; provider: string | null; status: 'pending' | 'confirmed' | 'failed' | 'cancelled' | 'refunded'; amount: number | null; currency: string; stripe_payment_intent_id: string | null; paid_at: string | null; created_at: string; updated_at: string; }
+export interface AiUsageLogRow { id: string; user_id: string | null; thread_id: string | null; model: string; input_tokens: number; output_tokens: number; estimated_cost_usd: number; created_at: string; }
+export interface UserDocumentRow { id: string; user_id: string; document_type: 'passport' | 'visa' | 'insurance' | 'other'; encrypted_payload: string | null; reminder_at: string | null; created_at: string; updated_at: string; }
+export interface UserPaymentRow { id: string; user_id: string; stripe_customer_id: string | null; stripe_payment_method_id: string | null; created_at: string; updated_at: string; }
+export interface UgcContentRow { id: string; user_id: string; trip_id: string | null; content_type: 'video' | 'photo' | 'story'; storage_path: string; caption: string | null; moderation_status: 'pending' | 'approved' | 'rejected'; created_at: string; updated_at: string; }
+export interface GooglePlaceRow { id: string; place_id: string; name: string; type: string | null; island: string | null; rating: number | null; photo_url: string | null; description: string | null; amenities: string[] | null; cuisine_type: string | null; vibe_tags: string[] | null; kid_friendly: boolean; }
 
 // ─── View Rows ───
 
-export interface AiDailyCostRow {
-  date: string;
-  model: string;
-  requests: number;
-  total_input_tokens: number;
-  total_output_tokens: number;
-  total_cost_usd: number;
-}
-
-export interface AiUserCost30dRow {
-  user_id: string;
-  requests: number;
-  total_input_tokens: number;
-  total_output_tokens: number;
-  total_cost_usd: number;
-}
+export interface AiDailyCostRow { date: string; model: string; requests: number; total_input_tokens: number; total_output_tokens: number; total_cost_usd: number; }
+export interface AiUserCost30dRow { user_id: string; requests: number; total_input_tokens: number; total_output_tokens: number; total_cost_usd: number; }
 
 // ─── Admin-specific types ───
 
-export interface AdminStats {
-  totalUsers: number;
-  newUsersToday: number;
-  newUsersWeek: number;
-  activeTrips: number;
-  totalTrips: number;
-  tripsByStatus: Record<string, number>;
-  totalBookings: number;
-  totalRevenue: number;
-  revenueThisMonth: number;
-  aiCostToday: number;
-  aiCostMonth: number;
-  totalMessages: number;
-  avgMessagesPerUser: number;
-  topIslands: { island: string; count: number }[];
-}
-
-// Support ticket type — will be created in a new migration
-export interface SupportTicketRow {
-  id: string;
-  user_id: string;
-  subject: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  assigned_to: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SupportMessageRow {
-  id: string;
-  ticket_id: string;
-  sender_type: 'user' | 'admin';
-  sender_id: string | null;
-  content: string;
-  created_at: string;
-}
-
-// ─── Admin V2 tables (migration: 20260517_admin_audit_and_roles.sql) ───
+export interface AdminStats { totalUsers: number; newUsersToday: number; newUsersWeek: number; activeTrips: number; totalTrips: number; tripsByStatus: Record<string, number>; totalBookings: number; totalRevenue: number; revenueThisMonth: number; aiCostToday: number; aiCostMonth: number; totalMessages: number; avgMessagesPerUser: number; topIslands: { island: string; count: number }[]; }
+export interface SupportTicketRow { id: string; user_id: string; subject: string; status: 'open' | 'in_progress' | 'resolved' | 'closed'; priority: 'low' | 'medium' | 'high' | 'critical'; assigned_to: string | null; created_at: string; updated_at: string; }
+export interface SupportMessageRow { id: string; ticket_id: string; sender_type: 'user' | 'admin'; sender_id: string | null; content: string; created_at: string; }
 
 export type AdminRole = 'super_admin' | 'admin' | 'viewer';
+export interface AdminUserRow { id: string; email: string; display_name: string; role: AdminRole; active: boolean; last_seen_at: string | null; created_at: string; updated_at: string; }
+export interface AdminAuditLogRow { id: string; admin_id: string | null; admin_email: string; action: string; entity_type: string; entity_id: string | null; before_state: Record<string, unknown> | null; after_state: Record<string, unknown> | null; metadata: Record<string, unknown>; ip_address: string | null; user_agent: string | null; created_at: string; }
+export interface AdminNoteRow { id: string; admin_id: string; admin_email: string; entity_type: string; entity_id: string; body: string; pinned: boolean; created_at: string; updated_at: string; }
+export interface PiiAccessLogRow { id: string; admin_id: string | null; admin_email: string; entity_type: string; entity_id: string; field: string; reason: string; ip_address: string | null; user_agent: string | null; created_at: string; }
+export interface AdminActionSummaryRow { admin_email: string; action: string; event_count: number; last_at: string; events_7d: number; events_30d: number; }
+export interface ApiCreditStatusRow { id: string; service: string; display_name: string; plan_tier: string | null; credit_balance: number | null; credit_currency: string; monthly_limit: number | null; current_month_usage: number; billing_period_start: string | null; billing_period_end: string | null; api_key_status: string; api_key_last_verified: string | null; notes: string | null; dashboard_url: string | null; created_at: string; updated_at: string; }
 
-export interface AdminUserRow {
+export interface DefaultHeaderImageRow {
   id: string;
-  email: string;
-  display_name: string;
-  role: AdminRole;
-  active: boolean;
-  last_seen_at: string | null;
+  title: string;
+  description: string | null;
+  header_type: 'global' | 'island' | 'itinerary_category' | 'business_type' | 'empty_state';
+  scope_key: string;
+  island: string | null;
+  category: string | null;
+  business_type: string | null;
+  desktop_image_url: string;
+  mobile_image_url: string | null;
+  card_image_url: string | null;
+  app_detail_image_url: string | null;
+  alt_text: string;
+  is_active: boolean;
+  usage_count: number;
+  sort_order: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface AdminAuditLogRow {
-  id: string;
-  admin_id: string | null;
-  admin_email: string;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  before_state: Record<string, unknown> | null;
-  after_state: Record<string, unknown> | null;
-  metadata: Record<string, unknown>;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
-
-export interface AdminNoteRow {
-  id: string;
-  admin_id: string;
-  admin_email: string;
-  entity_type: string;
-  entity_id: string;
-  body: string;
-  pinned: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PiiAccessLogRow {
-  id: string;
-  admin_id: string | null;
-  admin_email: string;
-  entity_type: string;
-  entity_id: string;
-  field: string;
-  reason: string;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
-
-export interface AdminActionSummaryRow {
-  admin_email: string;
-  action: string;
-  event_count: number;
-  last_at: string;
-  events_7d: number;
-  events_30d: number;
-}
-
-export interface ApiCreditStatusRow {
-  id: string;
-  service: string;
-  display_name: string;
-  plan_tier: string | null;
-  credit_balance: number | null;
-  credit_currency: string;
-  monthly_limit: number | null;
-  current_month_usage: number;
-  billing_period_start: string | null;
-  billing_period_end: string | null;
-  api_key_status: string;
-  api_key_last_verified: string | null;
-  notes: string | null;
-  dashboard_url: string | null;
-  created_at: string;
-  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 }

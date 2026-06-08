@@ -12,6 +12,7 @@ import { BookingsModule } from '@/components/bookings-module';
 import { ConciergeOrdersModule } from '@/components/concierge-orders-module';
 import { PaymentsModule } from '@/components/payments-module';
 import { GuidedDayModule } from '@/components/guided-day-module';
+import { DefaultMediaLibraryModule } from '@/components/default-media-library-module';
 import { AuditModule, BillingModule, ChatModule, ContentPerformanceModule, DestinationIntelligenceModule, SupportModule, TravelersModule, TripsModule } from '@/components/admin-core-modules';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
@@ -20,16 +21,38 @@ export default function CommandCenterPage() {
   const [time, setTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => { const timer = setInterval(() => setTime(new Date()), 60000); return () => clearInterval(timer); }, []);
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const active = ADMIN_MODULE_LOOKUP[activeModule];
-  const handleRefresh = () => { setRefreshing(true); window.dispatchEvent(new CustomEvent('admin:refresh')); setTimeout(() => setRefreshing(false), 600); };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    window.dispatchEvent(new CustomEvent('admin:refresh'));
+    setTimeout(() => setRefreshing(false), 600);
+  };
+
+  const renderOverview = () => (
+    <div className="flex flex-col gap-5">
+      <div className="bg-white rounded-xl border border-hairline p-6 shadow-card baha-gradient-card">
+        <h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-2">Baha Buddy Command Center</h2>
+        <p className="text-sm text-body max-w-3xl leading-relaxed">
+          Grouped workspace for revenue, bookings, concierge orders, payments, travelers, trips, destination intelligence, content, chat, support, systems, media, and audit operations.
+        </p>
+      </div>
+      <div className="grid grid-cols-4 gap-3">
+        <OverviewCard label="Foundation" value="Live" note="Access, audit, places, partners" />
+        <OverviewCard label="Modules" value="19" note="Grouped into 4 sections" />
+        <OverviewCard label="Default Media" value="Ready" note="Headers for pages and cards" success />
+        <OverviewCard label="Revenue gate" value="Concierge" note="Stripe payment to order queue" success />
+      </div>
+    </div>
+  );
 
   const renderModule = () => {
-    if (activeModule === 'overview') {
-      return <div className="flex flex-col gap-5"><div className="bg-white rounded-xl border border-hairline p-6 shadow-card baha-gradient-card"><h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-2">Baha Buddy Command Center</h2><p className="text-sm text-body max-w-3xl leading-relaxed">Grouped workspace for revenue, bookings, concierge orders, payments, travelers, trips, destination intelligence, content, chat, support, systems, and audit operations.</p></div><div className="grid grid-cols-4 gap-3"><div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Foundation</div><div className="text-2xl font-display font-bold text-ink">Live</div><div className="text-[11px] text-muted mt-1">Access, audit, places, partners</div></div><div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Modules</div><div className="text-2xl font-display font-bold text-ink">18</div><div className="text-[11px] text-muted mt-1">Grouped into 4 sections</div></div><div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Live modules</div><div className="text-2xl font-display font-bold text-ink">18</div><div className="text-[11px] text-muted mt-1">All navigation modules now render</div></div><div className="bg-white rounded-xl p-4 border border-hairline shadow-card"><div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">Revenue gate</div><div className="text-2xl font-display font-bold text-status-success">Concierge</div><div className="text-[11px] text-muted mt-1">Stripe payment to order queue</div></div></div></div>;
-    }
-
+    if (activeModule === 'overview') return renderOverview();
     if (activeModule === 'revenue') return <RevenueModule />;
     if (activeModule === 'bookings') return <BookingsModule />;
     if (activeModule === 'concierge-orders') return <ConciergeOrdersModule />;
@@ -47,8 +70,44 @@ export default function CommandCenterPage() {
     if (activeModule === 'high-intent') return <HighIntentModule />;
     if (activeModule === 'places') return <PlacesModuleV2 />;
     if (activeModule === 'partners') return <PartnersModuleV2 />;
+    if (activeModule === 'default-media-library') return <DefaultMediaLibraryModule />;
     return null;
   };
 
-  return <div className="flex min-h-screen font-body bg-white"><AdminSidebarV2 activeModule={activeModule} onNavigate={setActiveModule} /><main className="flex-1 flex flex-col min-w-0"><header className="flex justify-between items-center px-6 py-3.5 bg-white border-b border-hairline sticky top-0 z-10"><div><h1 className="text-xl font-display font-semibold tracking-tight text-ink">{active?.label || 'Command Center'}</h1><span className="text-xs text-muted">{time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} · {time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span></div><div className="flex items-center gap-3"><button onClick={handleRefresh} disabled={refreshing} className="px-3 py-1.5 rounded-lg border border-hairline bg-white text-xs text-body font-medium flex items-center gap-1.5 hover:border-brand-blue disabled:opacity-60" title="Reload all data on this page"><RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} /> {refreshing ? 'Refreshing…' : 'Refresh'}</button><button className="p-1.5 rounded-lg border border-hairline bg-white hover:border-brand-blue" title="Notifications"><Bell size={16} className="text-body" /></button><div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center text-white text-sm font-display font-bold">V</div></div></header><div className="flex-1 p-6 overflow-y-auto bg-surface/40">{renderModule()}</div></main></div>;
+  return (
+    <div className="flex min-h-screen font-body bg-white">
+      <AdminSidebarV2 activeModule={activeModule} onNavigate={setActiveModule} />
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="flex justify-between items-center px-6 py-3.5 bg-white border-b border-hairline sticky top-0 z-10">
+          <div>
+            <h1 className="text-xl font-display font-semibold tracking-tight text-ink">{active?.label || 'Command Center'}</h1>
+            <span className="text-xs text-muted">
+              {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} · {time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={handleRefresh} disabled={refreshing} className="px-3 py-1.5 rounded-lg border border-hairline bg-white text-xs text-body font-medium flex items-center gap-1.5 hover:border-brand-blue disabled:opacity-60" title="Reload all data on this page">
+              <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <button className="p-1.5 rounded-lg border border-hairline bg-white hover:border-brand-blue" title="Notifications">
+              <Bell size={16} className="text-body" />
+            </button>
+            <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center text-white text-sm font-display font-bold">V</div>
+          </div>
+        </header>
+        <div className="flex-1 p-6 overflow-y-auto bg-surface/40">{renderModule()}</div>
+      </main>
+    </div>
+  );
+}
+
+function OverviewCard({ label, value, note, success }: { label: string; value: string; note: string; success?: boolean }) {
+  return (
+    <div className="bg-white rounded-xl p-4 border border-hairline shadow-card">
+      <div className="text-[11px] text-muted font-medium tracking-wider uppercase mb-2">{label}</div>
+      <div className={`text-2xl font-display font-bold ${success ? 'text-status-success' : 'text-ink'}`}>{value}</div>
+      <div className="text-[11px] text-muted mt-1">{note}</div>
+    </div>
+  );
 }
