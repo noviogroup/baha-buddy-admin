@@ -65,6 +65,7 @@ export function DayStopAutofill() {
     setInput(form, 'latitude', place.latitude ?? '');
     setInput(form, 'longitude', place.longitude ?? '');
     setInput(form, 'google_place_id', place.google_place_id || '');
+    setInput(form, 'tripadvisor_location_id', place.tripadvisor_location_id || '');
     setInput(form, 'source', place.source);
     setInput(form, 'source_id', place.source_id);
     setInput(form, 'description', place.description || '');
@@ -98,12 +99,7 @@ export function DayStopAutofill() {
       {results.length > 0 && (
         <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-hairline bg-white">
           {results.map((place) => (
-            <button
-              key={`${place.source}-${place.source_id}`}
-              type="button"
-              onClick={() => usePlace(place)}
-              className="block w-full border-b border-hairline px-3 py-3 text-left hover:bg-surface/60 last:border-0"
-            >
+            <button key={`${place.source}-${place.source_id}`} type="button" onClick={() => usePlace(place)} className="block w-full border-b border-hairline px-3 py-3 text-left hover:bg-surface/60 last:border-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-semibold text-ink">{place.name}</div>
@@ -111,9 +107,7 @@ export function DayStopAutofill() {
                 </div>
                 <div className="shrink-0 rounded-full bg-surface px-2 py-1 text-[10px] font-bold uppercase text-body">{place.source}</div>
               </div>
-              {(place.rating || place.review_count) && (
-                <div className="mt-1 text-xs text-muted">Rating {place.rating || '—'} · {place.review_count || 0} reviews</div>
-              )}
+              {(place.rating || place.review_count) && <div className="mt-1 text-xs text-muted">Rating {place.rating || '—'} · {place.review_count || 0} reviews</div>}
             </button>
           ))}
         </div>
