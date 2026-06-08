@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 
 const OFFER_PRICES: Record<string, number> = { quick_review: 49, concierge_trip_plan: 149, full_planning_support: 299 };
 
+type IdRow = { id: string };
+
 function verifyStripeSignature(rawBody: string, signatureHeader: string | null, secret: string) {
   if (!signatureHeader) return false;
   const parts = signatureHeader.split(',').reduce<Record<string, string[]>>((acc, part) => { const [key, value] = part.split('='); if (!key || !value) return acc; acc[key] = acc[key] || []; acc[key].push(value); return acc; }, {});
@@ -80,20 +82,23 @@ export async function POST(request: Request) {
       if (orderId) {
         const { data: updated, error } = await supabase.from('concierge_orders').update({ user_id: userId, offer_type: offerId, price_usd: amount, status: 'paid', payment_status: 'paid', stripe_checkout_session_id: checkoutSessionId, stripe_payment_intent_id: paymentIntent, source, traveler_email: email, traveler_name: name, notes: `Stripe Checkout completed for ${product}.`, stripe_metadata: metadata, updated_at: new Date().toISOString() } as never).eq('id', orderId).select('id').maybeSingle();
         if (error) throw error;
-        if (updated?.id) { await recordEvent(supabase, event, 'concierge_orders'); sendPaymentEmails(updated.id, offerId, amount, email, name).catch(console.error); return NextResponse.json({ received: true, order_created: false, order_updated: true, order_id: updated.id }); }
+        const updatedRow = updated as IdRow | null;
+        if (updatedRow?.id) { await recordEvent(supabase, event, 'concierge_orders'); sendPaymentEmails(updatedRow.id, offerId, amount, email, name).catch(console.error); return NextResponse.json({ received: true, order_created: false, order_updated: true, order_id: updatedRow.id }); }
       }
 
       const existingOrder = await supabase.from('concierge_orders').select('id').eq('stripe_checkout_session_id', checkoutSessionId).maybeSingle();
-      if (!existingOrder.data) {
+      const existingRow = existingOrder.data as IdRow | null;
+      if (!existingRow) {
         const { data: created, error } = await supabase.from('concierge_orders').insert({ user_id: userId, offer_type: offerId, price_usd: amount, status: 'paid', payment_status: 'paid', stripe_checkout_session_id: checkoutSessionId, stripe_payment_intent_id: paymentIntent, source, traveler_email: email, traveler_name: name, notes: `Stripe Checkout completed for ${product}.`, stripe_metadata: metadata } as never).select('id').single();
         if (error) throw error;
+        const createdRow = created as IdRow;
         await recordEvent(supabase, event, 'concierge_orders');
-        if (created?.id) sendPaymentEmails(created.id, offerId, amount, email, name).catch(console.error);
-        return NextResponse.json({ received: true, order_created: true, order_id: created?.id });
+        if (createdRow?.id) sendPaymentEmails(createdRow.id, offerId, amount, email, name).catch(console.error);
+        return NextResponse.json({ received: true, order_created: true, order_id: createdRow?.id });
       }
 
       await recordEvent(supabase, event, 'concierge_orders');
-      return NextResponse.json({ received: true, order_created: false, order_id: existingOrder.data.id });
+      return NextResponse.json({ received: true, order_created: false, order_id: existingRow.id });
     }
 
     if (event.type === 'payment_intent.payment_failed') { const paymentIntent = event.data?.object?.id; if (paymentIntent) await supabase.from('concierge_orders').update({ payment_status: 'failed', status: 'payment_failed', updated_at: new Date().toISOString() } as never).eq('stripe_payment_intent_id', paymentIntent); await recordEvent(supabase, event, 'concierge_orders'); return NextResponse.json({ received: true }); }

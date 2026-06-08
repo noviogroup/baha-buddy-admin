@@ -27,6 +27,7 @@ export type AdminModuleId =
   | 'revenue'
   | 'bookings'
   | 'concierge-orders'
+  | 'guided-day'
   | 'payments'
   | 'travelers'
   | 'trips'
@@ -79,6 +80,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { id: 'bookings', label: 'Bookings', description: 'Flight, hotel, activity, restaurant, transfer, and service booking operations.', icon: <ClipboardList size={17} /> },
       { id: 'concierge-orders', label: 'Concierge Orders', description: 'Paid concierge trip plan orders from Stripe Checkout, assignment, fulfillment, and delivery.', icon: <CreditCard size={17} />, badge: 'New' },
+      { id: 'guided-day', label: 'Guided Day Plans', description: 'One-day plans, live guide readiness, pricing, and traveler feed placement.', icon: <Compass size={17} />, badge: 'New' },
       { id: 'payments', label: 'Payments & Receipts', description: 'Concierge payment reconciliation, Stripe references, receipt support, refunds, and source attribution.', icon: <CircleDollarSign size={17} />, badge: 'New' },
       { id: 'travelers', label: 'Travelers', description: 'User profiles, lifecycle, engagement, trips, bookings, and support context.', icon: <Users size={17} /> },
       { id: 'trips', label: 'Trips', description: 'Saved trips, itineraries, trip items, shared trips, and abandoned trip plans.', icon: <Compass size={17} /> },
