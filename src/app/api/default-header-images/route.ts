@@ -89,9 +89,10 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
 
     if (error) throw error;
 
-    await logAudit({ supabase, admin, request, action: 'default_header_created', entityType: 'default_header_image', entityId: data?.id ?? payload.scope_key, before: null, after: data, metadata: { header_type: payload.header_type, scope_key: payload.scope_key } });
+    const header = data as DefaultHeaderImageRecord | null;
+    await logAudit({ supabase, admin, request, action: 'default_header_created', entityType: 'default_header_image', entityId: header?.id ?? payload.scope_key, before: null, after: header, metadata: { header_type: payload.header_type, scope_key: payload.scope_key } });
 
-    return NextResponse.json({ success: true, header: data });
+    return NextResponse.json({ success: true, header });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }

@@ -47,6 +47,7 @@ export type AuditEntityType =
   | 'partner'
   | 'partner_place'
   | 'place'
+  | 'default_header_image'
   | 'concierge_order'
   | 'admin_user'
   | 'api_credit_status';
@@ -72,6 +73,7 @@ export type AuditAction =
   // Content
   | 'sanity_picks_rotated' | 'google_places_resync' | 'google_places_entry_updated'
   | 'place_updated'
+  | 'default_header_created' | 'default_header_updated' | 'default_header_deleted'
   // Concierge
   | 'concierge_order_updated'
   // Partners / promos / keys / billing
