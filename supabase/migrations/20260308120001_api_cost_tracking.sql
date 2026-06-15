@@ -19,16 +19,12 @@ CREATE TABLE IF NOT EXISTS public.api_usage_log (
   estimated_cost_usd decimal(10, 6) DEFAULT 0,-- estimated cost per call (when calculable)
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_api_usage_log_service ON public.api_usage_log(service);
 CREATE INDEX IF NOT EXISTS idx_api_usage_log_created ON public.api_usage_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_api_usage_log_user ON public.api_usage_log(user_id);
-
 ALTER TABLE public.api_usage_log ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Service role full access api_usage_log" ON public.api_usage_log
   FOR ALL USING (true) WITH CHECK (true);
-
 -- ============================================
 -- 2. api_credit_status — track account balances and billing status
 -- Updated manually or by a scheduled Edge Function
@@ -51,12 +47,9 @@ CREATE TABLE IF NOT EXISTS public.api_credit_status (
   updated_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 ALTER TABLE public.api_credit_status ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Service role full access credit_status" ON public.api_credit_status
   FOR ALL USING (true) WITH CHECK (true);
-
 -- Seed with all services
 INSERT INTO public.api_credit_status (service, display_name, plan_tier, dashboard_url, notes) VALUES
   ('anthropic',  'Anthropic Claude',   'pay-as-you-go', 'https://console.anthropic.com/settings/billing', 'Sonnet 4.5: $3/$15 per 1M tokens. Haiku: $1/$5. Prompt caching enabled.'),
@@ -69,7 +62,6 @@ INSERT INTO public.api_credit_status (service, display_name, plan_tier, dashboar
   ('supabase',   'Supabase',            'pro',            'https://supabase.com/dashboard',                 'Pro plan. Check egress, storage, and Edge Function invocations.'),
   ('open_meteo', 'Open-Meteo (Weather)','free',           'https://open-meteo.com',                         'Free, no API key. Rate limit: 10k requests/day.')
 ON CONFLICT (service) DO NOTHING;
-
 -- ============================================
 -- 3. Views for admin dashboard
 -- ============================================
@@ -87,7 +79,6 @@ SELECT
 FROM public.api_usage_log
 GROUP BY date(created_at), service, action
 ORDER BY date DESC, service;
-
 -- Combined daily costs across ALL services (AI + API)
 CREATE OR REPLACE VIEW public.all_daily_costs AS
 SELECT date, service, total_cost_usd, requests FROM (
@@ -116,7 +107,6 @@ SELECT date, service, total_cost_usd, requests FROM (
   GROUP BY date(created_at), service
 ) combined
 ORDER BY date DESC, service;
-
 -- Stripe revenue summary
 CREATE OR REPLACE VIEW public.stripe_revenue_summary AS
 SELECT

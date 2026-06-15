@@ -15,22 +15,16 @@ CREATE TABLE IF NOT EXISTS public.support_tickets (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON public.support_tickets(status);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_priority ON public.support_tickets(priority);
-
 ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own tickets" ON public.support_tickets
   FOR SELECT USING (auth.uid() = user_id);
-
 CREATE POLICY "Users can create tickets" ON public.support_tickets
   FOR INSERT WITH CHECK (auth.uid() = user_id);
-
 CREATE POLICY "Service can manage tickets" ON public.support_tickets
   FOR ALL USING (true) WITH CHECK (true);
-
 -- ---------------------------------------------------------------------------
 -- support_messages
 -- ---------------------------------------------------------------------------
@@ -42,11 +36,8 @@ CREATE TABLE IF NOT EXISTS public.support_messages (
   content text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_id ON public.support_messages(ticket_id);
-
 ALTER TABLE public.support_messages ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own ticket messages" ON public.support_messages
   FOR SELECT USING (
     EXISTS (
@@ -54,7 +45,6 @@ CREATE POLICY "Users can view own ticket messages" ON public.support_messages
       WHERE st.id = ticket_id AND st.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can send messages" ON public.support_messages
   FOR INSERT WITH CHECK (
     sender_type = 'user' AND
@@ -63,6 +53,5 @@ CREATE POLICY "Users can send messages" ON public.support_messages
       WHERE st.id = ticket_id AND st.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Service can manage messages" ON public.support_messages
   FOR ALL USING (true) WITH CHECK (true);

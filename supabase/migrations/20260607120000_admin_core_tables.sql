@@ -27,26 +27,21 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_admin_users_email ON public.admin_users(email);
 CREATE INDEX IF NOT EXISTS idx_admin_users_role ON public.admin_users(role);
 CREATE INDEX IF NOT EXISTS idx_admin_users_active ON public.admin_users(active);
-
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Admins can read own admin profile" ON public.admin_users;
 CREATE POLICY "Admins can read own admin profile" ON public.admin_users
   FOR SELECT
   TO authenticated
   USING (id = auth.uid());
-
 DROP POLICY IF EXISTS "Service role can manage admin users" ON public.admin_users;
 CREATE POLICY "Service role can manage admin users" ON public.admin_users
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 -- ---------------------------------------------------------------------------
 -- admin_audit_log
 -- ---------------------------------------------------------------------------
@@ -64,22 +59,18 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   user_agent text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin_id ON public.admin_audit_log(admin_id);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin_email ON public.admin_audit_log(admin_email);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action ON public.admin_audit_log(action);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_entity ON public.admin_audit_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created_at ON public.admin_audit_log(created_at DESC);
-
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Service role can manage audit log" ON public.admin_audit_log;
 CREATE POLICY "Service role can manage audit log" ON public.admin_audit_log
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 -- ---------------------------------------------------------------------------
 -- pii_access_log
 -- ---------------------------------------------------------------------------
@@ -95,20 +86,16 @@ CREATE TABLE IF NOT EXISTS public.pii_access_log (
   user_agent text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_pii_access_log_admin_id ON public.pii_access_log(admin_id);
 CREATE INDEX IF NOT EXISTS idx_pii_access_log_entity ON public.pii_access_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_pii_access_log_created_at ON public.pii_access_log(created_at DESC);
-
 ALTER TABLE public.pii_access_log ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Service role can manage pii access log" ON public.pii_access_log;
 CREATE POLICY "Service role can manage pii access log" ON public.pii_access_log
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 -- ---------------------------------------------------------------------------
 -- admin_notes
 -- ---------------------------------------------------------------------------
@@ -123,21 +110,17 @@ CREATE TABLE IF NOT EXISTS public.admin_notes (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_admin_notes_entity ON public.admin_notes(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_admin_notes_admin_id ON public.admin_notes(admin_id);
 CREATE INDEX IF NOT EXISTS idx_admin_notes_created_at ON public.admin_notes(created_at DESC);
-
 ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Service role can manage admin notes" ON public.admin_notes;
 CREATE POLICY "Service role can manage admin notes" ON public.admin_notes
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 -- ---------------------------------------------------------------------------
 -- Optional helper: touch updated_at manually from API routes until a global
 -- trigger strategy is adopted.
--- ---------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------;

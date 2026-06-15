@@ -23,29 +23,22 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_admin_users_email ON public.admin_users(email);
 CREATE INDEX IF NOT EXISTS idx_admin_users_role  ON public.admin_users(role);
-
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
-
 -- Admin users can see themselves; service role manages everything
 CREATE POLICY "Admin sees self" ON public.admin_users
   FOR SELECT USING (auth.uid() = id);
-
 CREATE POLICY "Service role full access admin_users" ON public.admin_users
   FOR ALL USING (true) WITH CHECK (true);
-
 -- Trigger to keep updated_at fresh
 CREATE OR REPLACE FUNCTION public.tg_set_updated_at() RETURNS trigger AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS set_updated_at_admin_users ON public.admin_users;
 CREATE TRIGGER set_updated_at_admin_users
   BEFORE UPDATE ON public.admin_users
   FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
-
 -- ============================================================================
 -- 2. admin_audit_log — immutable record of every admin mutation
 -- ============================================================================
@@ -63,14 +56,11 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   user_agent text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_audit_created_at  ON public.admin_audit_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_entity      ON public.admin_audit_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_admin       ON public.admin_audit_log(admin_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_action      ON public.admin_audit_log(action, created_at DESC);
-
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Service role read audit_log" ON public.admin_audit_log
   FOR SELECT USING (true);
 CREATE POLICY "Service role insert audit_log" ON public.admin_audit_log
@@ -85,12 +75,10 @@ BEGIN
   RAISE EXCEPTION 'Table % is append-only. % is not permitted.', TG_TABLE_NAME, TG_OP;
 END;
 $func$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS deny_update_audit_log ON public.admin_audit_log;
 CREATE TRIGGER deny_update_audit_log
   BEFORE UPDATE OR DELETE ON public.admin_audit_log
   FOR EACH ROW EXECUTE FUNCTION public.tg_deny_mutation();
-
 -- ============================================================================
 -- 3. admin_notes — free-form notes attached to any entity
 -- ============================================================================
@@ -105,20 +93,15 @@ CREATE TABLE IF NOT EXISTS public.admin_notes (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_notes_entity ON public.admin_notes(entity_type, entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notes_admin  ON public.admin_notes(admin_id, created_at DESC);
-
 ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Service role full access admin_notes" ON public.admin_notes
   FOR ALL USING (true) WITH CHECK (true);
-
 DROP TRIGGER IF EXISTS set_updated_at_admin_notes ON public.admin_notes;
 CREATE TRIGGER set_updated_at_admin_notes
   BEFORE UPDATE ON public.admin_notes
   FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
-
 -- ============================================================================
 -- 4. pii_access_log — every reveal of masked PII (passport, payment method last-4)
 -- ============================================================================
@@ -134,24 +117,19 @@ CREATE TABLE IF NOT EXISTS public.pii_access_log (
   user_agent text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_pii_log_created  ON public.pii_access_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_pii_log_entity   ON public.pii_access_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_pii_log_admin    ON public.pii_access_log(admin_id, created_at DESC);
-
 ALTER TABLE public.pii_access_log ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Service role read pii_log" ON public.pii_access_log
   FOR SELECT USING (true);
 CREATE POLICY "Service role insert pii_log" ON public.pii_access_log
   FOR INSERT WITH CHECK (true);
-
 -- Same tamper-resistance trigger as admin_audit_log.
 DROP TRIGGER IF EXISTS deny_update_pii_log ON public.pii_access_log;
 CREATE TRIGGER deny_update_pii_log
   BEFORE UPDATE OR DELETE ON public.pii_access_log
   FOR EACH ROW EXECUTE FUNCTION public.tg_deny_mutation();
-
 -- ============================================================================
 -- 5. View: admin_action_summary — used by audit log dashboard widgets
 -- ============================================================================
@@ -166,7 +144,6 @@ SELECT
 FROM public.admin_audit_log
 GROUP BY admin_email, action
 ORDER BY last_at DESC;
-
 -- ============================================================================
 -- 6. Seed: bootstrap super_admin (replace email before running in production)
 -- ============================================================================
@@ -179,10 +156,9 @@ FROM auth.users
 WHERE lower(email) = lower('valdez@noviogroup.com')
 ON CONFLICT (id) DO UPDATE
   SET role = 'super_admin', active = true, email = EXCLUDED.email;
-
 -- ============================================================================
 -- Done. Verify with:
 --   SELECT * FROM admin_users;
 --   SELECT * FROM admin_audit_log LIMIT 5;
 --   SELECT * FROM admin_action_summary;
--- ============================================================================
+-- ============================================================================;

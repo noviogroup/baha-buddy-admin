@@ -25,7 +25,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- ---------------------------------------------------------------------------
 -- 2. updated_at triggers
 -- ---------------------------------------------------------------------------
@@ -34,13 +33,11 @@ CREATE TRIGGER set_updated_at_admin_users
   BEFORE UPDATE ON public.admin_users
   FOR EACH ROW
   EXECUTE FUNCTION public.tg_set_updated_at();
-
 DROP TRIGGER IF EXISTS set_updated_at_admin_notes ON public.admin_notes;
 CREATE TRIGGER set_updated_at_admin_notes
   BEFORE UPDATE ON public.admin_notes
   FOR EACH ROW
   EXECUTE FUNCTION public.tg_set_updated_at();
-
 -- ---------------------------------------------------------------------------
 -- 3. append-only protection helper
 -- ---------------------------------------------------------------------------
@@ -50,7 +47,6 @@ BEGIN
   RAISE EXCEPTION 'Table % is append-only. % is not permitted.', TG_TABLE_NAME, TG_OP;
 END;
 $$ LANGUAGE plpgsql;
-
 -- ---------------------------------------------------------------------------
 -- 4. append-only audit / PII triggers
 -- ---------------------------------------------------------------------------
@@ -61,14 +57,12 @@ CREATE TRIGGER deny_update_admin_audit_log
   BEFORE UPDATE OR DELETE ON public.admin_audit_log
   FOR EACH ROW
   EXECUTE FUNCTION public.tg_deny_mutation();
-
 -- PII reveal logs should also be append-only.
 DROP TRIGGER IF EXISTS deny_update_pii_access_log ON public.pii_access_log;
 CREATE TRIGGER deny_update_pii_access_log
   BEFORE UPDATE OR DELETE ON public.pii_access_log
   FOR EACH ROW
   EXECUTE FUNCTION public.tg_deny_mutation();
-
 -- ---------------------------------------------------------------------------
 -- 5. admin_action_summary view
 -- ---------------------------------------------------------------------------
@@ -83,7 +77,6 @@ SELECT
 FROM public.admin_audit_log
 GROUP BY admin_email, action
 ORDER BY last_at DESC;
-
 -- ---------------------------------------------------------------------------
 -- Verification queries after running:
 -- ---------------------------------------------------------------------------
@@ -102,4 +95,4 @@ ORDER BY last_at DESC;
 -- select table_name
 -- from information_schema.views
 -- where table_schema = 'public'
---   and table_name = 'admin_action_summary';
+--   and table_name = 'admin_action_summary';;
