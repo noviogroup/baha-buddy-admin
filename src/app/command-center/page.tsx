@@ -6,7 +6,7 @@ import { AdminSidebarV2 } from '@/components/admin-sidebar-v2';
 import { RevenueModule } from '@/components/revenue-module';
 import { AdminUsersModule } from '@/components/admin-users-module';
 import { HighIntentModule } from '@/components/high-intent-module';
-import { PlacesModuleV2 } from '@/components/places-module-v2';
+import { PlacesManagerModule } from '@/components/places-manager-module';
 import { PartnersModuleV2 } from '@/components/partners-module-v2';
 import { BookingsModule } from '@/components/bookings-module';
 import { ConciergeOrdersModule } from '@/components/concierge-orders-module';
@@ -68,7 +68,7 @@ export default function CommandCenterPage() {
     if (activeModule === 'audit') return <AuditModule />;
     if (activeModule === 'admin-users') return <AdminUsersModule />;
     if (activeModule === 'high-intent') return <HighIntentModule />;
-    if (activeModule === 'places') return <PlacesModuleV2 />;
+    if (activeModule === 'places') return <PlacesManagerModule />;
     if (activeModule === 'partners') return <PartnersModuleV2 />;
     if (activeModule === 'default-media-library') return <DefaultMediaLibraryModule />;
     return null;

@@ -72,7 +72,7 @@ export type AuditAction =
   | 'ticket_priority_changed' | 'ticket_admin_reply'
   // Content
   | 'sanity_picks_rotated' | 'google_places_resync' | 'google_places_entry_updated'
-  | 'place_updated'
+  | 'place_created' | 'place_updated' | 'place_archived'
   | 'default_header_created' | 'default_header_updated' | 'default_header_deleted'
   // Concierge
   | 'concierge_order_updated'
