@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { useApi } from '@/lib/use-api';
+import { MediaGalleryManager, type GalleryImage } from '@/components/media-gallery-manager';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ type PlaceRow = {
   short_description: string | null;
   description: string | null;
   primary_image_url: string | null;
-  gallery_images: string[];
+  gallery_images: GalleryImage[];
   gallery_count: number;
   rating: number | null;
   review_count: number;
@@ -402,35 +403,18 @@ function PlacePanel({
             </div>
           </Section>
 
-          <Section title="Media">
+          <Section title="Media Gallery">
             <div className="space-y-3">
-              <Field label="Primary Image URL">
-                <div className="flex gap-2">
-                  <input value={form.primary_image_url || ''} onChange={e => set('primary_image_url', e.target.value)} className={`${inp} flex-1`} placeholder="https://…" />
-                  {form.primary_image_url && (
-                    <div className="w-14 h-10 rounded-lg overflow-hidden border border-hairline shrink-0">
-                      <img src={form.primary_image_url} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    </div>
-                  )}
-                </div>
-              </Field>
-              <div>
-                <label className="block text-xs font-semibold text-body mb-1">Gallery Images ({(form.gallery_images || []).length})</label>
-                <p className="text-xs text-muted mb-2">Managed via Media Gallery Manager — shown here for reference only.</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(form.gallery_images || []).slice(0, 6).map((url, i) => (
-                    <div key={i} className="w-12 h-12 rounded-lg overflow-hidden border border-hairline">
-                      <img src={url} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                  {(form.gallery_images || []).length > 6 && (
-                    <div className="w-12 h-12 rounded-lg border border-hairline bg-surface flex items-center justify-center text-xs text-muted font-semibold">
-                      +{(form.gallery_images || []).length - 6}
-                    </div>
-                  )}
-                  {(form.gallery_images || []).length === 0 && <span className="text-xs text-muted">No gallery images yet</span>}
-                </div>
-              </div>
+              <MediaGalleryManager
+                placeId={form.id || 'new'}
+                images={form.gallery_images || []}
+                onChange={imgs => {
+                  set('gallery_images', imgs);
+                  const primary = imgs.find(img => img.is_primary);
+                  if (primary) set('primary_image_url', primary.url);
+                }}
+                showPartnerApprovals={!!form.id}
+              />
             </div>
           </Section>
 

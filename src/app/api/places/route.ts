@@ -29,6 +29,29 @@ function cleanArray(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0).map(v => v.trim());
 }
 
+type GalleryImage = { url: string; alt: string; type: string; is_primary: boolean; order: number };
+
+function cleanGallery(value: unknown): GalleryImage[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item, i): GalleryImage | null => {
+      if (typeof item === 'string' && item.trim()) {
+        return { url: item.trim(), alt: '', type: 'gallery', is_primary: i === 0, order: i };
+      }
+      if (item && typeof item === 'object' && typeof (item as any).url === 'string' && (item as any).url.trim()) {
+        return {
+          url: (item as any).url.trim(),
+          alt: typeof (item as any).alt === 'string' ? (item as any).alt : '',
+          type: typeof (item as any).type === 'string' ? (item as any).type : 'gallery',
+          is_primary: !!(item as any).is_primary,
+          order: typeof (item as any).order === 'number' ? (item as any).order : i,
+        };
+      }
+      return null;
+    })
+    .filter((img): img is GalleryImage => img !== null);
+}
+
 function cleanBool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
@@ -149,7 +172,7 @@ export const POST = withAdminAuth(async (request, { supabase, admin }) => {
       short_description: cleanText(body.short_description),
       description: cleanText(body.description),
       primary_image_url: cleanText(body.primary_image_url),
-      gallery_images: cleanArray(body.gallery_images),
+      gallery_images: cleanGallery(body.gallery_images),
       amenities: cleanArray(body.amenities),
       tags: cleanArray(body.tags),
       best_for: cleanArray(body.best_for),
@@ -226,7 +249,12 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
       if (typeof body.short_description !== 'undefined') updates.short_description = cleanText(body.short_description);
       if (typeof body.description !== 'undefined') updates.description = cleanText(body.description);
       if (typeof body.primary_image_url !== 'undefined') updates.primary_image_url = cleanText(body.primary_image_url);
-      if (Array.isArray(body.gallery_images)) updates.gallery_images = cleanArray(body.gallery_images);
+      if (Array.isArray(body.gallery_images)) {
+        const gallery = cleanGallery(body.gallery_images);
+        updates.gallery_images = gallery;
+        const primaryImg = gallery.find(img => img.is_primary);
+        if (primaryImg && !body.primary_image_url) updates.primary_image_url = primaryImg.url;
+      }
       if (Array.isArray(body.amenities)) updates.amenities = cleanArray(body.amenities);
       if (Array.isArray(body.tags)) updates.tags = cleanArray(body.tags);
       if (Array.isArray(body.best_for)) updates.best_for = cleanArray(body.best_for);
