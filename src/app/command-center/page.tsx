@@ -13,6 +13,7 @@ import { ConciergeOrdersModule } from '@/components/concierge-orders-module';
 import { PaymentsModule } from '@/components/payments-module';
 import { GuidedDayModule } from '@/components/guided-day-module';
 import { DefaultMediaLibraryModule } from '@/components/default-media-library-module';
+import { DealsManagerModule } from '@/components/deals-manager-module';
 import { AuditModule, BillingModule, ChatModule, ContentPerformanceModule, DestinationIntelligenceModule, SupportModule, TravelersModule, TripsModule } from '@/components/admin-core-modules';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
@@ -70,6 +71,7 @@ export default function CommandCenterPage() {
     if (activeModule === 'high-intent') return <HighIntentModule />;
     if (activeModule === 'places') return <PlacesManagerModule />;
     if (activeModule === 'partners') return <PartnersModuleV2 />;
+    if (activeModule === 'deals') return <DealsManagerModule />;
     if (activeModule === 'default-media-library') return <DefaultMediaLibraryModule />;
     return null;
   };
