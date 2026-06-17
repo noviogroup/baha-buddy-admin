@@ -101,6 +101,7 @@ export interface TripAccommodationRow {
   nights: number | null;
   guests: number | null;
   booking_reference: string | null;
+  stripe_payment_intent_id: string | null;
   photo_url: string | null;
   stars: number | null;
   rating: number | null;

@@ -294,6 +294,7 @@ function ItineraryTab({
                 ['Rate', a.liteapi_rate_id],
                 ['Prebook', a.liteapi_prebook_id],
                 ['Booking ref', a.booking_reference],
+                ['Payment intent', a.stripe_payment_intent_id],
               ].filter(([, value]) => Boolean(value));
 
               return (

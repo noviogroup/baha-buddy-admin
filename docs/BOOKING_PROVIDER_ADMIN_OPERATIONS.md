@@ -30,3 +30,9 @@ Admin should show:
 ## Operational Rule
 
 Admin should read normalized Baha Buddy booking records first. Direct provider actions should happen only through server-side routes.
+
+## June 17, 2026 Hotel/Stay Checkpoint
+
+Admin trip detail now exposes the mobile hotel/stay reconciliation fields from `trip_accommodations`, including canonical `place_id`, LiteAPI hotel/rate/prebook IDs, provider booking reference, status, total price, and `stripe_payment_intent_id`.
+
+The bookings API normalizes canonical `bookings` into source surface, payment status, provider status, provider reference, and support failure state. Current verification is documented in [`2026-06-17-ADMIN-STAY-VISIBILITY-DATED-REVIEW.md`](./2026-06-17-ADMIN-STAY-VISIBILITY-DATED-REVIEW.md).
