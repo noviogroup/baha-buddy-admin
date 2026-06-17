@@ -346,10 +346,16 @@ function ItineraryTab({
                   </div>
                   <div className="flex flex-col gap-1 ml-3 border-l-2 border-hairline pl-3">
                     {dayItems.map((a: any, i: number) => (
-                      <div key={a.id || i} className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm text-ink font-medium">{a.title || a.activity_id || 'Activity'}</span>
+                      <div key={a.id || i} className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="text-sm text-ink font-medium">{a.activity_name || a.title || a.source_id || 'Activity'}</span>
                           {a.time_slot && <span className="text-[11px] text-muted ml-2">{a.time_slot}</span>}
+                          <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-muted">
+                            {a.activity_type && <span>{a.activity_type}</span>}
+                            {a.source_type && <span>source: {a.source_type}</span>}
+                            {a.source_id && <span>id: {a.source_id}</span>}
+                            {a.provider && <span>provider: {a.provider}</span>}
+                          </div>
                         </div>
                         {a.status && <Badge status={a.status} />}
                       </div>
