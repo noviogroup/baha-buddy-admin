@@ -84,7 +84,30 @@ export interface TripRow {
 
 export interface ChatThreadRow { id: string; trip_id: string | null; user_id: string; last_message_preview: string | null; created_at: string; updated_at: string; }
 export interface ChatMessageRow { id: string; thread_id: string; role: 'user' | 'assistant' | 'system'; content: string; card_type: 'none' | 'destination' | 'hotel' | 'flight' | 'dayPlan' | 'activity' | 'map' | 'summary' | 'payment' | 'mixed'; card_data: Record<string, unknown> | null; created_at: string; }
-export interface TripAccommodationRow { id: string; trip_id: string; place_id: string | null; name: string; island: string | null; check_in: string | null; check_out: string | null; price_per_night: number | null; guests: number | null; booking_reference: string | null; created_at: string; updated_at: string; }
+export interface TripAccommodationRow {
+  id: string;
+  trip_id: string;
+  place_id: string | null;
+  liteapi_hotel_id: string | null;
+  liteapi_rate_id: string | null;
+  liteapi_prebook_id: string | null;
+  name: string;
+  island: string | null;
+  check_in: string | null;
+  check_out: string | null;
+  price_per_night: number | null;
+  total_price: number | null;
+  currency: string | null;
+  nights: number | null;
+  guests: number | null;
+  booking_reference: string | null;
+  photo_url: string | null;
+  stars: number | null;
+  rating: number | null;
+  status: string | null;
+  created_at: string;
+  updated_at: string;
+}
 export interface TripFlightRow { id: string; trip_id: string; origin: string; destination: string; departure_at: string | null; arrival_at: string | null; airline: string | null; booking_reference: string | null; price: number | null; duffel_offer_id: string | null; created_at: string; updated_at: string; }
 export interface TripActivityRow { id: string; trip_id: string; day_number: number; time_slot: 'morning' | 'afternoon' | 'evening'; activity_name: string; activity_type: string | null; place_id: string | null; notes: string | null; sort_order: number; created_at: string; updated_at: string; }
 export interface TripCollaboratorRow { id: string; trip_id: string; user_id: string; role: 'owner' | 'editor' | 'viewer'; invited_at: string; accepted_at: string | null; }

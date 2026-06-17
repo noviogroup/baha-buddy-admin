@@ -11,6 +11,7 @@ import {
 import { useApi } from '@/lib/use-api';
 import { CHART, Badge, Section, TH, timeAgo } from '@/lib/ui-primitives';
 import { CancelBookingsModal } from '@/components/cancel-bookings-modal';
+import type { TripAccommodationRow } from '@/lib/types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TRIP DETAIL — Phase 2 #17
@@ -30,15 +31,25 @@ import { CancelBookingsModal } from '@/components/cancel-bookings-modal';
 
 const DOLLAR = '$';
 const fmt$ = (n: number) => DOLLAR + n.toLocaleString();
+const fmtMoney = (value: unknown, currency = 'USD') => {
+  const amount = typeof value === 'number' ? value : parseFloat(String(value ?? '0'));
+  return `${DOLLAR}${Number.isFinite(amount) ? amount.toLocaleString() : '0'} ${currency}`;
+};
+const shortId = (value?: string | null) => (value ? `${value.slice(0, 14)}${value.length > 14 ? '...' : ''}` : null);
 
 type Tab = 'itinerary' | 'budget' | 'bookings' | 'chat' | 'people' | 'admin';
+
+type AdminTripAccommodation = TripAccommodationRow & {
+  hotel_name?: string | null;
+  cost?: number | string | null;
+};
 
 interface TripDetailResponse {
   trip: any;
   bookings: any[];
   threads: any[];
   collaborators: any[];
-  accommodations: any[];
+  accommodations: AdminTripAccommodation[];
   flights: any[];
   activities: any[];
   budget: { byCategory: Record<string, number>; totalSpent: number; estimate: number; delta: number };
@@ -220,7 +231,7 @@ function TripHeader({
 function ItineraryTab({
   accommodations, flights, activities, dateStart, dateEnd, tablesStatus,
 }: {
-  accommodations: any[]; flights: any[]; activities: any[];
+  accommodations: AdminTripAccommodation[]; flights: any[]; activities: any[];
   dateStart?: string; dateEnd?: string;
   tablesStatus: Record<string, boolean>;
 }) {
@@ -274,22 +285,46 @@ function ItineraryTab({
       {accommodations.length > 0 && (
         <Section title={`Accommodations (${accommodations.length})`} action={<Hotel size={14} className="text-muted" />}>
           <div className="divide-y divide-hairline">
-            {accommodations.map((a: any, i: number) => (
-              <div key={a.id || i} className="px-5 py-3 flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="font-semibold text-ink">{a.name || a.hotel_name || 'Stay'}</div>
-                  <div className="text-xs text-muted mt-0.5">
-                    {a.check_in && <span>{new Date(a.check_in).toLocaleDateString()}</span>}
-                    {a.check_out && <span> → {new Date(a.check_out).toLocaleDateString()}</span>}
-                    {a.place_id && <span className="font-mono ml-2">· {a.place_id.slice(0, 12)}…</span>}
+            {accommodations.map((a, i) => {
+              const currency = a.currency || 'USD';
+              const total = a.total_price ?? a.cost ?? 0;
+              const identityRows = [
+                ['Place ID', a.place_id],
+                ['LiteAPI hotel', a.liteapi_hotel_id],
+                ['Rate', a.liteapi_rate_id],
+                ['Prebook', a.liteapi_prebook_id],
+                ['Booking ref', a.booking_reference],
+              ].filter(([, value]) => Boolean(value));
+
+              return (
+                <div key={a.id || i} className="px-5 py-3 flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-ink">{a.name || a.hotel_name || 'Stay'}</div>
+                    <div className="text-xs text-muted mt-0.5">
+                      {a.check_in && <span>{new Date(a.check_in).toLocaleDateString()}</span>}
+                      {a.check_out && <span> → {new Date(a.check_out).toLocaleDateString()}</span>}
+                      {a.nights ? <span className="ml-2">· {a.nights} night{a.nights === 1 ? '' : 's'}</span> : null}
+                      {a.guests ? <span className="ml-2">· {a.guests} guest{a.guests === 1 ? '' : 's'}</span> : null}
+                      {a.price_per_night ? <span className="ml-2">· {fmtMoney(a.price_per_night, currency)}/night</span> : null}
+                    </div>
+                    {identityRows.length > 0 && (
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                        {identityRows.map(([label, value]) => (
+                          <div key={label} className="rounded-md bg-surface px-2 py-1">
+                            <div className="text-[9px] uppercase tracking-wider text-muted font-semibold">{label}</div>
+                            <div className="text-[11px] font-mono text-body truncate" title={String(value)}>{shortId(String(value))}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="font-bold text-ink">{fmtMoney(total, currency)}</div>
+                    <Badge status={a.status || 'pending'} />
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="font-bold text-ink">{fmt$(parseFloat(a.cost || 0))}</div>
-                  <Badge status={a.status || 'pending'} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Section>
       )}
