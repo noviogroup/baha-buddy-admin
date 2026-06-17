@@ -11,6 +11,13 @@ function num(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+type CanonicalBookingExtra = {
+  id: string;
+  booking_reference?: string | null;
+  external_reference?: string | null;
+  financial_metadata?: Record<string, unknown> | null;
+};
+
 export const GET = withAdminAuth(async (request, { supabase }) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -34,7 +41,7 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
     const { data, error } = await query;
     if (error) throw error;
 
-    const rows = data || [];
+    const rows = await enrichBookingRows(supabase, data || []);
     const summary = rows.reduce((acc: Record<string, number>, row: any) => {
       const gross = num(row.gross_booking_value);
       const net = num(row.net_revenue);
@@ -110,3 +117,64 @@ export const PATCH = withAdminAuth(async (request, { supabase, admin }) => {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }, { requireRole: 'admin' });
+
+async function enrichBookingRows(supabase: any, rows: any[]) {
+  if (!rows.length) return rows;
+  const ids = rows.map(row => row.id).filter(Boolean);
+  const { data } = await supabase
+    .from('bookings')
+    .select('id, booking_reference, external_reference, financial_metadata')
+    .in('id', ids);
+  const extras = new Map((data || []).map((row: CanonicalBookingExtra) => [row.id, row]));
+
+  return rows.map(row => {
+    const extra = extras.get(row.id) as CanonicalBookingExtra | undefined;
+    const metadata = extra?.financial_metadata || {};
+    const providerReference = row.external_reference || extra?.external_reference || extra?.booking_reference || row.reference_id || null;
+    const paymentStatus = paymentStatusFor(row);
+    const providerStatus = providerStatusFor(providerReference, metadata, row.status);
+
+    return {
+      ...row,
+      provider_reference: providerReference,
+      source_surface: sourceSurfaceFor(metadata),
+      payment_status: paymentStatus,
+      provider_status: providerStatus,
+      failure_state: failureStateFor(paymentStatus, providerStatus, row.status, providerReference),
+    };
+  });
+}
+
+function sourceSurfaceFor(metadata: Record<string, unknown>) {
+  const source = metadata.source_surface ?? metadata.source ?? metadata.surface;
+  return typeof source === 'string' && source.trim() ? source.trim() : 'unknown';
+}
+
+function paymentStatusFor(row: any) {
+  const status = String(row.status || '').toLowerCase();
+  if (row.paid_at || status === 'confirmed') return 'paid';
+  if (status === 'failed') return 'failed';
+  if (status === 'cancelled') return 'cancelled';
+  if (status === 'refunded') return 'refunded';
+  return 'pending';
+}
+
+function providerStatusFor(providerReference: unknown, metadata: Record<string, unknown>, bookingStatus: unknown) {
+  const metadataStatus = String(metadata.provider_status || '').toLowerCase();
+  const rowStatus = String(bookingStatus || '').toLowerCase();
+  const status = metadataStatus || rowStatus;
+  if (['failed', 'error'].includes(status)) return 'failed';
+  if (['cancelled', 'canceled', 'refunded'].includes(status)) return status === 'refunded' ? 'cancelled' : status;
+  if (providerReference && !['pending', 'started'].includes(status)) return 'confirmed';
+  return providerReference ? 'confirmed' : 'pending';
+}
+
+function failureStateFor(paymentStatus: string, providerStatus: string, bookingStatus: unknown, providerReference: unknown) {
+  const status = String(bookingStatus || '').toLowerCase();
+  if (paymentStatus === 'paid' && providerStatus === 'failed') return 'payment_succeeded_provider_failed';
+  if (providerStatus === 'confirmed' && status === 'failed') return 'provider_succeeded_local_failed';
+  if (paymentStatus === 'pending' && !providerReference) return 'abandoned_checkout';
+  if (providerStatus === 'pending') return 'provider_pending';
+  if (status === 'cancelled' || status === 'refunded') return status;
+  return 'none';
+}

@@ -17,6 +17,11 @@ type BookingRow = {
   updated_at?: string;
   stripe_payment_intent_id: string | null;
   paid_at?: string | null;
+  provider_reference?: string | null;
+  source_surface?: string | null;
+  payment_status?: string | null;
+  provider_status?: string | null;
+  failure_state?: string | null;
 };
 
 function money(value: unknown, currency = 'USD') {
@@ -65,6 +70,7 @@ export function BookingDetailPanel({ booking, onClose, onChanged }: { booking: B
         <div className="border border-hairline rounded-xl p-4">
           <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">Payment</div>
           <div className="text-body flex items-center gap-2"><CreditCard size={14} className="text-brand-blue" /> {booking.stripe_payment_intent_id || 'No Stripe payment intent'}</div>
+          <div className="text-xs text-body mt-2">Payment status: <span className="font-semibold capitalize">{booking.payment_status || booking.status || 'pending'}</span></div>
           <div className="text-xs text-muted mt-2">Paid at: {booking.paid_at ? new Date(booking.paid_at).toLocaleString() : '—'}</div>
         </div>
 
@@ -72,6 +78,7 @@ export function BookingDetailPanel({ booking, onClose, onChanged }: { booking: B
           <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">References</div>
           <div className="text-xs text-body">Booking ID: {booking.id}</div>
           <div className="text-xs text-body mt-1">Reference ID: {booking.reference_id || '—'}</div>
+          <div className="text-xs text-body mt-1">Provider ref: {booking.provider_reference || '—'}</div>
           <div className="text-xs text-body mt-1">Trip ID: {booking.trip_id || '—'}</div>
           <div className="text-xs text-body mt-1">User ID: {booking.user_id || '—'}</div>
         </div>
@@ -86,6 +93,12 @@ export function BookingDetailPanel({ booking, onClose, onChanged }: { booking: B
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="px-5 pb-5 grid grid-cols-3 gap-3 text-xs">
+        <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Source:</span> {booking.source_surface || 'unknown'}</div>
+        <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Provider status:</span> {booking.provider_status || 'pending'}</div>
+        <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Failure state:</span> {booking.failure_state || 'none'}</div>
       </div>
 
       <div className="px-5 pb-5 text-xs text-muted flex items-center gap-1.5">
