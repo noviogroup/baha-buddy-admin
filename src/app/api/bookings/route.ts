@@ -15,7 +15,18 @@ type CanonicalBookingExtra = {
   id: string;
   booking_reference?: string | null;
   external_reference?: string | null;
+  stripe_payment_intent_id?: string | null;
   financial_metadata?: Record<string, unknown> | null;
+};
+
+type CanonicalTripItem = {
+  id: string;
+  booking_reference?: string | null;
+  stripe_payment_intent_id?: string | null;
+  status?: string | null;
+  name?: string | null;
+  place_id?: string | null;
+  liteapi_hotel_id?: string | null;
 };
 
 export const GET = withAdminAuth(async (request, { supabase }) => {
@@ -123,16 +134,22 @@ async function enrichBookingRows(supabase: any, rows: any[]) {
   const ids = rows.map(row => row.id).filter(Boolean);
   const { data } = await supabase
     .from('bookings')
-    .select('id, booking_reference, external_reference, financial_metadata')
+    .select('id, booking_reference, external_reference, stripe_payment_intent_id, financial_metadata')
     .in('id', ids);
-  const extras = new Map((data || []).map((row: CanonicalBookingExtra) => [row.id, row]));
+  const extras = new Map<string, CanonicalBookingExtra>(
+    ((data || []) as CanonicalBookingExtra[]).map(row => [row.id, row] as [string, CanonicalBookingExtra]),
+  );
+  const tripItemsByIntent = await loadTripItemsByPaymentIntent(supabase, rows, extras);
 
   return rows.map(row => {
     const extra = extras.get(row.id) as CanonicalBookingExtra | undefined;
     const metadata = extra?.financial_metadata || {};
-    const providerReference = row.external_reference || extra?.external_reference || extra?.booking_reference || row.reference_id || null;
+    const paymentIntentId = firstString(row.stripe_payment_intent_id, extra?.stripe_payment_intent_id);
+    const tripItem = paymentIntentId ? tripItemsByIntent.get(paymentIntentId) : undefined;
+    const tripItemStatus = normalizedStatus(tripItem?.status);
+    const providerReference = tripItem?.booking_reference || row.external_reference || extra?.external_reference || extra?.booking_reference || row.reference_id || null;
     const paymentStatus = paymentStatusFor(row);
-    const providerStatus = providerStatusFor(providerReference, metadata, row.status);
+    const providerStatus = providerStatusFor(providerReference, metadata, row.status, tripItemStatus);
 
     return {
       ...row,
@@ -140,9 +157,46 @@ async function enrichBookingRows(supabase: any, rows: any[]) {
       source_surface: sourceSurfaceFor(metadata),
       payment_status: paymentStatus,
       provider_status: providerStatus,
-      failure_state: failureStateFor(paymentStatus, providerStatus, row.status, providerReference),
+      trip_item_id: tripItem?.id ?? null,
+      trip_item_status: tripItemStatus || null,
+      trip_item_name: tripItem?.name ?? null,
+      failure_state: failureStateFor(paymentStatus, providerStatus, row.status, providerReference, tripItemStatus),
     };
   });
+}
+
+async function loadTripItemsByPaymentIntent(
+  supabase: any,
+  rows: any[],
+  extras: Map<string, CanonicalBookingExtra>,
+) {
+  const paymentIntentIds = Array.from(new Set(rows
+    .map(row => firstString(row.stripe_payment_intent_id, extras.get(row.id)?.stripe_payment_intent_id))
+    .filter(Boolean) as string[]));
+  const result = new Map<string, CanonicalTripItem>();
+  if (!paymentIntentIds.length) return result;
+
+  const { data: accommodations } = await supabase
+    .from('trip_accommodations')
+    .select('id, name, place_id, liteapi_hotel_id, status, booking_reference, stripe_payment_intent_id')
+    .in('stripe_payment_intent_id', paymentIntentIds);
+
+  for (const item of (accommodations || []) as CanonicalTripItem[]) {
+    const intent = firstString(item.stripe_payment_intent_id);
+    if (intent) result.set(intent, item);
+  }
+
+  const { data: flights } = await supabase
+    .from('trip_flights')
+    .select('id, booking_reference, stripe_payment_intent_id')
+    .in('stripe_payment_intent_id', paymentIntentIds);
+
+  for (const item of (flights || []) as CanonicalTripItem[]) {
+    const intent = firstString(item.stripe_payment_intent_id);
+    if (intent && !result.has(intent)) result.set(intent, item);
+  }
+
+  return result;
 }
 
 function sourceSurfaceFor(metadata: Record<string, unknown>) {
@@ -159,22 +213,37 @@ function paymentStatusFor(row: any) {
   return 'pending';
 }
 
-function providerStatusFor(providerReference: unknown, metadata: Record<string, unknown>, bookingStatus: unknown) {
+function providerStatusFor(providerReference: unknown, metadata: Record<string, unknown>, bookingStatus: unknown, tripItemStatus?: string) {
   const metadataStatus = String(metadata.provider_status || '').toLowerCase();
   const rowStatus = String(bookingStatus || '').toLowerCase();
-  const status = metadataStatus || rowStatus;
+  const status = tripItemStatus || metadataStatus || rowStatus;
   if (['failed', 'error'].includes(status)) return 'failed';
   if (['cancelled', 'canceled', 'refunded'].includes(status)) return status === 'refunded' ? 'cancelled' : status;
+  if (['booked', 'confirmed', 'succeeded', 'paid'].includes(status)) return providerReference ? 'confirmed' : 'pending';
   if (providerReference && !['pending', 'started'].includes(status)) return 'confirmed';
   return providerReference ? 'confirmed' : 'pending';
 }
 
-function failureStateFor(paymentStatus: string, providerStatus: string, bookingStatus: unknown, providerReference: unknown) {
+function failureStateFor(paymentStatus: string, providerStatus: string, bookingStatus: unknown, providerReference: unknown, tripItemStatus?: string) {
   const status = String(bookingStatus || '').toLowerCase();
+  if (tripItemStatus === 'refunded') return 'refunded';
+  if (tripItemStatus === 'cancelled' || tripItemStatus === 'canceled') return 'cancelled';
   if (paymentStatus === 'paid' && providerStatus === 'failed') return 'payment_succeeded_provider_failed';
+  if (paymentStatus === 'paid' && providerStatus === 'cancelled') return 'cancelled';
   if (providerStatus === 'confirmed' && status === 'failed') return 'provider_succeeded_local_failed';
   if (paymentStatus === 'pending' && !providerReference) return 'abandoned_checkout';
   if (providerStatus === 'pending') return 'provider_pending';
   if (status === 'cancelled' || status === 'refunded') return status;
   return 'none';
+}
+
+function normalizedStatus(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim().toLowerCase() : '';
+}
+
+function firstString(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
 }
