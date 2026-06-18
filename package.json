@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "verify:stay-schema": "node scripts/verify-trip-accommodation-canonical-columns.mjs",
     "sync": "bash scripts/sync.sh"
   },
   "dependencies": {

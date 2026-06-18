@@ -36,6 +36,12 @@ const fmtMoney = (value: unknown, currency = 'USD') => {
   return `${DOLLAR}${Number.isFinite(amount) ? amount.toLocaleString() : '0'} ${currency}`;
 };
 const shortId = (value?: string | null) => (value ? `${value.slice(0, 14)}${value.length > 14 ? '...' : ''}` : null);
+const asStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(item => String(item ?? '').trim())
+    .filter(Boolean);
+};
 
 type Tab = 'itinerary' | 'budget' | 'bookings' | 'chat' | 'people' | 'admin';
 
@@ -288,6 +294,9 @@ function ItineraryTab({
             {accommodations.map((a, i) => {
               const currency = a.currency || 'USD';
               const total = a.total_price ?? a.cost ?? 0;
+              const galleryImages = asStringList(a.gallery_images);
+              const amenities = asStringList(a.amenities);
+              const leadImage = a.photo_url || galleryImages[0] || null;
               const identityRows = [
                 ['Place ID', a.place_id],
                 ['LiteAPI hotel', a.liteapi_hotel_id],
@@ -299,8 +308,25 @@ function ItineraryTab({
 
               return (
                 <div key={a.id || i} className="px-5 py-3 flex items-start justify-between gap-4">
+                  {leadImage && (
+                    <div
+                      role="img"
+                      aria-label={a.name || a.hotel_name || 'Stay'}
+                      className="h-20 w-24 rounded-xl border border-hairline bg-surface bg-cover bg-center shrink-0"
+                      style={{ backgroundImage: `url(${leadImage})` }}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-ink">{a.name || a.hotel_name || 'Stay'}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="font-semibold text-ink">{a.name || a.hotel_name || 'Stay'}</div>
+                      {a.property_type && (
+                        <span className="rounded-full bg-brand-blue-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-blue-dark">
+                          {a.property_type}
+                        </span>
+                      )}
+                      {a.rating ? <span className="text-[11px] font-semibold text-muted">★ {a.rating}</span> : null}
+                      {a.stars ? <span className="text-[11px] font-semibold text-muted">{a.stars}-star</span> : null}
+                    </div>
                     <div className="text-xs text-muted mt-0.5">
                       {a.check_in && <span>{new Date(a.check_in).toLocaleDateString()}</span>}
                       {a.check_out && <span> → {new Date(a.check_out).toLocaleDateString()}</span>}
@@ -308,6 +334,36 @@ function ItineraryTab({
                       {a.guests ? <span className="ml-2">· {a.guests} guest{a.guests === 1 ? '' : 's'}</span> : null}
                       {a.price_per_night ? <span className="ml-2">· {fmtMoney(a.price_per_night, currency)}/night</span> : null}
                     </div>
+                    {a.address && (
+                      <div className="mt-1 flex items-start gap-1.5 text-xs text-body">
+                        <MapPin size={12} className="mt-0.5 shrink-0 text-muted" />
+                        <span>{a.address}</span>
+                      </div>
+                    )}
+                    {a.description && (
+                      <p className="mt-2 max-w-3xl text-xs leading-relaxed text-body line-clamp-2">
+                        {a.description}
+                      </p>
+                    )}
+                    {(amenities.length > 0 || galleryImages.length > 1) && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {amenities.slice(0, 6).map(amenity => (
+                          <span key={amenity} className="rounded-full bg-surface px-2 py-1 text-[10px] font-semibold text-body">
+                            {amenity}
+                          </span>
+                        ))}
+                        {amenities.length > 6 && (
+                          <span className="rounded-full bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
+                            +{amenities.length - 6} amenities
+                          </span>
+                        )}
+                        {galleryImages.length > 1 && (
+                          <span className="rounded-full bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
+                            {galleryImages.length} gallery images
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {identityRows.length > 0 && (
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                         {identityRows.map(([label, value]) => (
