@@ -1,0 +1,70 @@
+{
+  "success": [],
+  "failed": [
+    {
+      "name": "Nassau & Paradise Island",
+      "reason": "No image found on page"
+    },
+    {
+      "name": "The Abacos",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (c451fe83-53e1-4b16-aeb3-8fc00103b5b6, 3e7f2ef9-4f6e-4a3a-aee4-15496c7ed196, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., The Abacos hero image, bahamas.com, 1, 2026-06-19 17:02:03.961025+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Acklins & Crooked Island",
+      "reason": "No image found on page"
+    },
+    {
+      "name": "Andros",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (97092024-a819-421f-a23d-f46d466c29ef, 36583422-a250-49b4-8e2b-15dacae27ac0, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Andros hero image, bahamas.com, 1, 2026-06-19 17:02:53.81475+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "The Berry Islands",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (0da8bd9c-f647-47da-a51c-24131e4d5f9d, db4a7dce-2420-4303-a139-e87d4549073c, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., The Berry Islands hero image, bahamas.com, 1, 2026-06-19 17:03:29.755839+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Bimini",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (0e3ee3ce-b621-445f-a120-539ae6c5d1fa, ff5a27be-df41-4a65-b645-8619b49ce32c, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Bimini hero image, bahamas.com, 1, 2026-06-19 17:04:06.959642+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Cat Island",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (0cdc2e69-2e03-4045-a47b-840f5b8d7481, 4e459aa1-7d13-4a4f-b0e9-8c63793a8b5f, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Cat Island hero image, bahamas.com, 1, 2026-06-19 17:04:40.905132+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Eleuthera & Harbour Island",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (b46cc8de-45a8-4572-b8a5-1c3e715b662f, b00c524a-2718-40ad-9573-80e57a315349, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Eleuthera & Harbour Island hero image, bahamas.com, 1, 2026-06-19 17:05:18.173967+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "The Exumas",
+      "reason": "No image found on page"
+    },
+    {
+      "name": "Freeport — Grand Bahama Island",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (bd5247f7-87dc-42a9-a09c-74d5751cfa00, fcddbe92-2229-41f7-a809-ed512f54e793, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Freeport — Grand Bahama Island hero image, bahamas.com, 1, 2026-06-19 17:06:09.613718+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Inagua",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (d3a553b4-1bc0-40af-8288-038c3483553f, 03b9e5e3-79ee-4147-b1f1-b6bbde3fa67d, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Inagua hero image, bahamas.com, 1, 2026-06-19 17:06:45.032136+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Long Island",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (88adeec4-0d01-4ddc-bcb6-d2eebfdb388b, 88d36cc3-d321-4195-ad1f-f13e133e675a, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Long Island hero image, bahamas.com, 1, 2026-06-19 17:07:19.38432+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Mayaguana",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (b79db72f-bfe8-424c-b877-08c0e50e011c, 5303784e-100d-4bab-989e-b99d8b866a04, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Mayaguana hero image, bahamas.com, 1, 2026-06-19 17:07:51.875823+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Ragged Island",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (9a1ed011-6df4-4a2a-a51f-cb37a7c4ac2b, fd6b37ca-b50f-47aa-a4af-983bc4e8fbc3, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Ragged Island hero image, bahamas.com, 1, 2026-06-19 17:08:27.419908+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "Rum Cay",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (f14a3c63-60b4-4e00-b45e-cbb761eef9eb, 01315b7e-2ef9-470c-9ecd-5b2ecb2377ae, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., Rum Cay hero image, bahamas.com, 1, 2026-06-19 17:08:59.514375+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    },
+    {
+      "name": "San Salvador",
+      "reason": "Supabase POST /rest/v1/place_photos → 400: {\"code\":\"23514\",\"details\":\"Failing row contains (09050a37-8d03-485d-b8f6-b21db3240ac6, ccd6d312-e7e0-455f-ad2b-156a57471c6f, island, https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., https://cxcfymhoncysyloutvkh.supabase.co/storage/v1/object/publi..., San Salvador hero image, bahamas.com, 1, 2026-06-19 17:09:33.21403+00).\",\"hint\":null,\"message\":\"new row for relation \\\"place_photos\\\" violates check constraint \\\"place_photos_place_type_check\\\"\"}"
+    }
+  ],
+  "skipped": []
+}
