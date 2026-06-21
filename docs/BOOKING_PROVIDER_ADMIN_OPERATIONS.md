@@ -76,3 +76,11 @@ Admin Travelers now includes canonical booking health summaries on the traveler 
 The users API keeps `users` as the traveler source, but it now also loads canonical `bookings` for returned user IDs, enriches rows with trip accommodations/flights, and adds per-traveler counts for payment status, provider status, recovery issues, source surfaces, captured payment value, recognized revenue, and unique trip count.
 
 Current verification is documented in [`2026-06-20-ADMIN-CANONICAL-TRAVELERS-DATED-REVIEW.md`](./2026-06-20-ADMIN-CANONICAL-TRAVELERS-DATED-REVIEW.md).
+
+## June 20, 2026 Revenue Checkpoint
+
+Admin Revenue Command Center now uses canonical booking reconciliation for revenue recognition.
+
+The revenue summary API reads canonical `bookings`, enriches rows with trip accommodations/flights, and reports captured payments separately from recognized revenue. Revenue now exposes payment status, provider status, source surface, recovery state, booking issue counts, and P0 recovery counts so finance and operations can separate money collected from revenue that is safe to recognize.
+
+Current verification is documented in [`2026-06-20-ADMIN-CANONICAL-REVENUE-DATED-REVIEW.md`](./2026-06-20-ADMIN-CANONICAL-REVENUE-DATED-REVIEW.md).
