@@ -26,7 +26,7 @@ export interface Database {
       pii_access_log: { Row: PiiAccessLogRow; Insert: Partial<PiiAccessLogRow> & Pick<PiiAccessLogRow, 'admin_email' | 'entity_type' | 'entity_id' | 'field' | 'reason'>; Update: never; Relationships: [] };
       default_header_images: { Row: DefaultHeaderImageRow; Insert: Partial<DefaultHeaderImageRow> & Pick<DefaultHeaderImageRow, 'title' | 'header_type' | 'scope_key' | 'desktop_image_url' | 'alt_text'>; Update: Partial<DefaultHeaderImageRow>; Relationships: [] };
       launch_readiness_tasks: { Row: LaunchReadinessTaskRow; Insert: Partial<LaunchReadinessTaskRow> & Pick<LaunchReadinessTaskRow, 'title'>; Update: Partial<LaunchReadinessTaskRow>; Relationships: [] };
-      communication_events: { Row: CommunicationEventRow; Insert: Partial<CommunicationEventRow> & Pick<CommunicationEventRow, 'user_id' | 'type' | 'category' | 'title' | 'body' | 'idempotency_key'>; Update: Partial<CommunicationEventRow>; Relationships: [] };
+      communication_events: { Row: CommunicationEventRow; Insert: Partial<CommunicationEventRow> & Pick<CommunicationEventRow, 'user_id' | 'type' | 'category' | 'title' | 'body' | 'channels' | 'idempotency_key'>; Update: Partial<CommunicationEventRow>; Relationships: [] };
       communication_deliveries: { Row: CommunicationDeliveryRow; Insert: Partial<CommunicationDeliveryRow> & Pick<CommunicationDeliveryRow, 'event_id' | 'user_id' | 'channel' | 'status'>; Update: Partial<CommunicationDeliveryRow>; Relationships: [] };
     };
     Views: {
@@ -161,6 +161,7 @@ export interface CommunicationEventRow {
   body: string;
   route: string | null;
   payload: Record<string, unknown>;
+  channels: CommunicationChannel[];
   idempotency_key: string;
   status: CommunicationStatus;
   created_at: string;

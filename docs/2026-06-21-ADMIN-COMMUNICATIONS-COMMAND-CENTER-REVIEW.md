@@ -1,6 +1,6 @@
 # Admin Communications Command Center Review - June 21, 2026
 
-Review time: June 21, 2026, 04:14 EDT
+Review time: June 21, 2026, 04:18 EDT
 Scope: Admin Communications module, communication event API, safe resend path, and launch-readiness visibility
 
 ## Executive Status
@@ -9,7 +9,7 @@ Admin now has an operational Communications module for the transactional communi
 
 The command center can list `communication_events`, join delivery attempts from `communication_deliveries`, show traveler context, summarize sent/failed/skipped states, and trigger audited safe email resends through the Supabase `send-communication` Edge Function.
 
-This is source-ready and locally validated. It still depends on the shared Supabase project having the transactional communications migration applied and the `send-communication` function deployed with `INTERNAL_API_SECRET`.
+This is source-ready, locally validated, and the linked Supabase project now has the transactional communications schema applied. `send-communication`, `send-trip-invite`, `accept-invite`, and `stripe-webhook` are deployed with `INTERNAL_API_SECRET` available as a Supabase secret.
 
 ## What Changed
 
@@ -19,7 +19,7 @@ This is source-ready and locally validated. It still depends on the shared Supab
 - Added `POST /api/communications` for safe email resend.
 - Added `communication_event` to admin audit entity types.
 - Added `INTERNAL_API_SECRET` to `.env.example`.
-- Updated admin database types for `communication_events` and `communication_deliveries`.
+- Updated admin database types for `communication_events` and `communication_deliveries`, including the communication event `channels` audit field.
 - Added focused API tests for listing, resend eligibility, internal Edge Function call shape, and audit metadata.
 
 ## Launch-Safety Rules
@@ -37,6 +37,7 @@ Passed locally:
 - `npm run test -- tests/api/communications.test.ts`
 - `npm run test` with 24 files and 65 tests
 - `npm run build`
+- V2 `npm run verify:communications-remote` against the linked Supabase project
 
 Not runnable as a configured check:
 
@@ -48,15 +49,14 @@ Reason: the admin package does not currently have an ESLint config, so `next lin
 
 Before launch approval:
 
-1. Apply the transactional communications migration to the shared Supabase project.
-2. Deploy `send-communication`.
-3. Configure `INTERNAL_API_SECRET` in both Admin and Supabase Edge Function secrets.
-4. Verify `/api/communications` loads real events.
-5. Trigger a failed/skipped email delivery and use Admin to resend it.
-6. Confirm the resend creates:
+1. Configure `INTERNAL_API_SECRET` in the deployed Admin hosting environment.
+2. Verify `/api/communications` loads real events from production.
+3. Trigger a failed/skipped email delivery and use Admin to resend it.
+4. Confirm the resend creates:
    - a new `communication_events` row
    - a new `communication_deliveries` email row
    - an `admin_audit_log` row with `email_resent`
+5. Complete Firebase credential setup before validating push deliveries.
 
 ## Launch Decision
 
