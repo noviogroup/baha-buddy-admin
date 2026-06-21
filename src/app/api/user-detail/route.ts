@@ -1,7 +1,24 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
+import { enrichBookingRows, isRecognizedRevenue, num } from '@/lib/booking-reconciliation';
 
 export const dynamic = 'force-dynamic';
+
+type BookingRow = {
+  id: string;
+  amount?: number | string | null;
+  status?: string | null;
+  paid_at?: string | null;
+  stripe_payment_intent_id?: string | null;
+  booking_type?: string | null;
+  booking_reference?: string | null;
+  external_reference?: string | null;
+  financial_metadata?: Record<string, unknown> | null;
+  payment_status?: string;
+  provider_status?: string;
+  failure_state?: string;
+  reconciled?: boolean;
+};
 
 // GET /api/user-detail?id=xxx — full user profile + trips + bookings + chat threads
 //
@@ -44,16 +61,15 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
       (sum: number, r: any) => sum + (r.input_tokens || 0) + (r.output_tokens || 0), 0
     );
 
-    // Calculate booking revenue from this user
-    const confirmedBookings = (bookingsRes.data || []).filter((b: any) => b.status === 'confirmed');
-    const userRevenue = confirmedBookings.reduce(
-      (sum: number, b: any) => sum + (parseFloat(b.amount) || 0), 0
+    const bookings = await enrichBookingRows(supabase, (bookingsRes.data || []) as BookingRow[]);
+    const userRevenue = bookings.filter(isRecognizedRevenue).reduce(
+      (sum: number, b: BookingRow) => sum + num(b.amount), 0
     );
 
     return NextResponse.json({
       user: userRes.data,
       trips: tripsRes.data || [],
-      bookings: bookingsRes.data || [],
+      bookings,
       threads: threadsRes.data || [],
       aiUsage: {
         recentLogs: aiUsageRes.data || [],

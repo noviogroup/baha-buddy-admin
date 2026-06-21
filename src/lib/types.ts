@@ -25,6 +25,7 @@ export interface Database {
       admin_notes: { Row: AdminNoteRow; Insert: Partial<AdminNoteRow> & Pick<AdminNoteRow, 'admin_id' | 'admin_email' | 'entity_type' | 'entity_id' | 'body'>; Update: Partial<AdminNoteRow>; Relationships: [] };
       pii_access_log: { Row: PiiAccessLogRow; Insert: Partial<PiiAccessLogRow> & Pick<PiiAccessLogRow, 'admin_email' | 'entity_type' | 'entity_id' | 'field' | 'reason'>; Update: never; Relationships: [] };
       default_header_images: { Row: DefaultHeaderImageRow; Insert: Partial<DefaultHeaderImageRow> & Pick<DefaultHeaderImageRow, 'title' | 'header_type' | 'scope_key' | 'desktop_image_url' | 'alt_text'>; Update: Partial<DefaultHeaderImageRow>; Relationships: [] };
+      launch_readiness_tasks: { Row: LaunchReadinessTaskRow; Insert: Partial<LaunchReadinessTaskRow> & Pick<LaunchReadinessTaskRow, 'title'>; Update: Partial<LaunchReadinessTaskRow>; Relationships: [] };
     };
     Views: {
       ai_daily_costs: { Row: AiDailyCostRow; Relationships: [] };
@@ -164,4 +165,30 @@ export interface DefaultHeaderImageRow {
   updated_at: string;
   created_by: string | null;
   updated_by: string | null;
+}
+
+export type LaunchReadinessPriority = 'p0' | 'p1' | 'p2' | 'p3';
+export type LaunchReadinessStatus = 'todo' | 'in_progress' | 'needs_approval' | 'approved' | 'blocked' | 'done';
+
+export interface LaunchReadinessTaskRow {
+  id: string;
+  source_key: string | null;
+  title: string;
+  description: string | null;
+  workstream: string;
+  priority: LaunchReadinessPriority;
+  status: LaunchReadinessStatus;
+  owner: string | null;
+  approver_email: string | null;
+  approved_at: string | null;
+  due_date: string | null;
+  scenario_ref: string | null;
+  source_doc_path: string | null;
+  evidence_url: string | null;
+  notes: string | null;
+  sort_order: number;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
 }

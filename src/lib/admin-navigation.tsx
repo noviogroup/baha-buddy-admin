@@ -7,6 +7,7 @@ import {
   Building2,
   CircleDollarSign,
   ClipboardList,
+  ClipboardCheck,
   Compass,
   CreditCard,
   FileText,
@@ -26,6 +27,7 @@ import {
 
 export type AdminModuleId =
   | 'overview'
+  | 'launch-readiness'
   | 'revenue'
   | 'bookings'
   | 'concierge-orders'
@@ -71,6 +73,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'overview', label: 'Overview', description: 'Daily executive snapshot of users, trips, revenue, AI cost, and system activity.', icon: <Home size={17} /> },
+      { id: 'launch-readiness', label: 'Launch Readiness', description: 'Cross-functional task manager for beta gates, scenario gaps, approvals, evidence, and launch blockers.', icon: <ClipboardCheck size={17} />, badge: 'New' },
       { id: 'revenue', label: 'Revenue', description: 'Revenue by product, channel, partner, booking type, and service line.', icon: <CircleDollarSign size={17} />, badge: 'New' },
       { id: 'destination-intelligence', label: 'Destination Intelligence', description: 'Most requested islands, hotels, activities, restaurants, origin markets, and unmet demand.', icon: <TrendingUp size={17} />, badge: 'New' },
       { id: 'high-intent', label: 'High-Intent Queue', description: 'Travelers likely to book, request concierge support, or need human follow-up.', icon: <Target size={17} />, badge: 'New' },

@@ -14,6 +14,7 @@ import { PaymentsModule } from '@/components/payments-module';
 import { GuidedDayModule } from '@/components/guided-day-module';
 import { DefaultMediaLibraryModule } from '@/components/default-media-library-module';
 import { DealsManagerModule } from '@/components/deals-manager-module';
+import { LaunchReadinessModule } from '@/components/launch-readiness-module';
 import { AuditModule, BillingModule, ChatModule, ContentPerformanceModule, DestinationIntelligenceModule, SupportModule, TravelersModule, TripsModule } from '@/components/admin-core-modules';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
@@ -40,20 +41,21 @@ export default function CommandCenterPage() {
       <div className="bg-white rounded-xl border border-hairline p-6 shadow-card baha-gradient-card">
         <h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-2">Baha Buddy Command Center</h2>
         <p className="text-sm text-body max-w-3xl leading-relaxed">
-          Grouped workspace for revenue, bookings, concierge orders, payments, travelers, trips, destination intelligence, content, chat, support, systems, media, and audit operations.
+          Grouped workspace for launch readiness, revenue, bookings, concierge orders, payments, travelers, trips, destination intelligence, content, chat, support, systems, media, and audit operations.
         </p>
       </div>
       <div className="grid grid-cols-4 gap-3">
         <OverviewCard label="Foundation" value="Live" note="Access, audit, places, partners" />
-        <OverviewCard label="Modules" value="19" note="Grouped into 4 sections" />
+        <OverviewCard label="Modules" value="20" note="Grouped into 4 sections" />
         <OverviewCard label="Default Media" value="Ready" note="Headers for pages and cards" success />
-        <OverviewCard label="Revenue gate" value="Concierge" note="Stripe payment to order queue" success />
+        <OverviewCard label="Launch gate" value="Tracked" note="Scenario approvals and blockers" success />
       </div>
     </div>
   );
 
   const renderModule = () => {
     if (activeModule === 'overview') return renderOverview();
+    if (activeModule === 'launch-readiness') return <LaunchReadinessModule />;
     if (activeModule === 'revenue') return <RevenueModule />;
     if (activeModule === 'bookings') return <BookingsModule />;
     if (activeModule === 'concierge-orders') return <ConciergeOrdersModule />;

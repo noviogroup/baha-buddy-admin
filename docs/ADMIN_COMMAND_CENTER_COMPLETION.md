@@ -7,6 +7,7 @@ The admin portal has been expanded from operational shells into a full Command C
 ### Command Center
 
 - Overview
+- Launch Readiness
 - Revenue
 - Destination Intelligence
 - High-Intent Queue
@@ -34,6 +35,18 @@ The admin portal has been expanded from operational shells into a full Command C
 - Audit Log
 
 ## Key completed work
+
+### Launch readiness operations
+
+The team now has a launch approval board for:
+
+- Scenario coverage gaps
+- Beta and launch gates
+- P0 blockers
+- Owner assignments
+- Evidence links
+- Review/approval status
+- Audited create, update, status-change, and approval actions
 
 ### Concierge revenue operations
 
@@ -79,6 +92,8 @@ The following modules were added as v1 dashboards using existing admin APIs:
 ## Current status
 
 All navigation modules render in `src/app/command-center/page.tsx`.
+
+Launch Readiness requires the migration `supabase/migrations/20260619130000_launch_readiness_tasks.sql` before persistent tasks appear in production.
 
 The remaining work is stabilization and QA:
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
+import { enrichBookingRows } from '@/lib/booking-reconciliation';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,15 @@ type BookingRow = {
   amount: number | string | null;
   status: string | null;
   created_at: string;
+  paid_at?: string | null;
+  stripe_payment_intent_id?: string | null;
+  booking_reference?: string | null;
+  external_reference?: string | null;
+  financial_metadata?: Record<string, unknown> | null;
+  payment_status?: string;
+  provider_status?: string;
+  failure_state?: string;
+  reconciled?: boolean;
 };
 
 type Lead = {
@@ -119,19 +129,19 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
 
     const { data: bookingsData } = await supabase
       .from('bookings')
-      .select('id,user_id,trip_id,booking_type,amount,status,created_at')
+      .select('id,user_id,trip_id,booking_type,amount,status,created_at,paid_at,stripe_payment_intent_id,booking_reference,external_reference,financial_metadata')
       .in('user_id', userIds)
       .gte('created_at', since);
 
     const trips = (tripsData || []) as TripRow[];
     const threads = (threadsData || []) as ThreadRow[];
-    const bookings = (bookingsData || []) as BookingRow[];
+    const bookings = await enrichBookingRows(supabase, (bookingsData || []) as BookingRow[]);
 
     const leads: Lead[] = ((usersData || []) as UserRow[]).map(user => {
       const userTrips = trips.filter(t => t.user_id === user.id);
       const userThreads = threads.filter(t => t.user_id === user.id);
       const userBookings = bookings.filter(b => b.user_id === user.id);
-      const confirmedBookings = userBookings.filter(b => b.status === 'confirmed');
+      const confirmedBookings = userBookings.filter(b => b.reconciled === true);
       const pendingBookings = userBookings.filter(b => b.status === 'pending');
       const activeTrips = userTrips.filter(t => ['planned', 'booked', 'active', 'draft'].includes(t.status || ''));
       const latestTrip = userTrips.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] || null;

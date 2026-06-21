@@ -42,25 +42,27 @@ This migration should be applied before relying on admin auth, admin role manage
 Recommended primary navigation:
 
 1. Overview
-2. Revenue
-3. Bookings
-4. Travelers
-5. Trips
-6. High-Intent Queue
-7. Places
-8. Partners
-9. Destination Intelligence
-10. Content Performance
-11. Chat & AI
-12. Billing & APIs
-13. Support
-14. Admin & Audit
+2. Launch Readiness
+3. Revenue
+4. Bookings
+5. Travelers
+6. Trips
+7. High-Intent Queue
+8. Places
+9. Partners
+10. Destination Intelligence
+11. Content Performance
+12. Chat & AI
+13. Billing & APIs
+14. Support
+15. Admin & Audit
 
 This can be grouped in the sidebar as:
 
 ### Command Center
 
 - Overview
+- Launch Readiness
 - Revenue
 - Destination Intelligence
 - High-Intent Queue
@@ -118,7 +120,37 @@ A daily executive snapshot for the Baha Buddy team.
 
 ---
 
-# Module 2: Revenue
+# Module 2: Launch Readiness
+
+## Purpose
+
+Cross-functional task manager for beta and launch readiness. It turns the scenario coverage plan into assigned, reviewable, auditable gates that the team can manage from the admin panel.
+
+## Required capabilities
+
+- Seed launch gates from the scenario coverage plan
+- Track priority, workstream, owner, status, due date, evidence, notes, and source/scenario reference
+- Move items through `todo`, `in_progress`, `needs_approval`, `approved`, `blocked`, and `done`
+- Capture approver email and timestamp when an item is approved
+- Show launch gate status, open P0 count, blocked count, and completion rate
+- Audit create, update, status change, and approval actions
+
+## Data sources
+
+- `launch_readiness_tasks`
+- `admin_users`
+- `admin_audit_log`
+- Scenario coverage source: `../docs/2026-06-19-USER-SCENARIO-COVERAGE-PLAN.md`
+
+## Current implementation
+
+- Migration: `supabase/migrations/20260619130000_launch_readiness_tasks.sql`
+- API: `src/app/api/launch-readiness/route.ts`
+- UI: `src/components/launch-readiness-module.tsx`
+
+---
+
+# Module 3: Revenue
 
 ## Purpose
 

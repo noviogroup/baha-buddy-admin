@@ -9,6 +9,7 @@ type RevenueSummary = {
     revenueToday: number;
     revenueThisMonth: number;
     grossBookingValue: number;
+    capturedPayments: number;
     estimatedNetRevenue: number;
     aiCostToday: number;
     aiCostMonth: number;
@@ -20,17 +21,39 @@ type RevenueSummary = {
     failedBookings: number;
     cancelledBookings: number;
     refundedBookings: number;
+    paymentPaid: number;
+    paymentPending: number;
+    paymentRefunded: number;
+    providerConfirmed: number;
+    providerPending: number;
+    providerFailed: number;
+    bookingIssues: number;
+    p0BookingIssues: number;
     paidUsers: number;
+    revenueSource?: string;
   };
   breakdowns: {
-    byCategory: { label: string; count: number; gross: number; paid: number }[];
-    byProvider: { label: string; count: number; gross: number; paid: number }[];
-    byStatus: { label: string; count: number; gross: number; paid: number }[];
+    byCategory: RevenueBreakdownRow[];
+    byProvider: RevenueBreakdownRow[];
+    byStatus: RevenueBreakdownRow[];
+    byPaymentStatus?: RevenueBreakdownRow[];
+    byProviderStatus?: RevenueBreakdownRow[];
+    bySource?: RevenueBreakdownRow[];
+    byRecoveryState?: RevenueBreakdownRow[];
   };
   notes: string[];
 };
 
 const money = (value: number) => `$${(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+type RevenueBreakdownRow = {
+  label: string;
+  count: number;
+  gross: number;
+  captured?: number;
+  paid: number;
+  issues?: number;
+};
 
 function RevenueCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string | number; sub?: string }) {
   return (
@@ -45,7 +68,7 @@ function RevenueCard({ icon, label, value, sub }: { icon: React.ReactNode; label
   );
 }
 
-function BreakdownTable({ title, rows }: { title: string; rows: { label: string; count: number; gross: number; paid: number }[] }) {
+function BreakdownTable({ title, rows }: { title: string; rows: RevenueBreakdownRow[] }) {
   return (
     <div className="bg-white rounded-xl border border-hairline overflow-hidden shadow-card">
       <div className="px-5 py-3 border-b border-hairline">
@@ -58,18 +81,22 @@ function BreakdownTable({ title, rows }: { title: string; rows: { label: string;
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Label</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Count</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Gross</th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Paid</th>
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Captured</th>
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Recognized</th>
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Issues</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-muted">No data yet</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-muted">No data yet</td></tr>
             ) : rows.map(row => (
               <tr key={row.label} className="border-b border-hairline last:border-0 hover:bg-surface/50">
                 <td className="px-4 py-3 font-semibold text-ink capitalize">{row.label.replace(/_/g, ' ')}</td>
                 <td className="px-4 py-3 text-body">{row.count}</td>
                 <td className="px-4 py-3 text-body">{money(row.gross)}</td>
+                <td className="px-4 py-3 text-body">{money(row.captured || 0)}</td>
                 <td className="px-4 py-3 text-body">{money(row.paid)}</td>
+                <td className="px-4 py-3 text-body">{row.issues || 0}</td>
               </tr>
             ))}
           </tbody>
@@ -120,7 +147,7 @@ export function RevenueModule() {
           <div>
             <h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-1">Revenue Command Center</h2>
             <p className="text-sm text-body max-w-3xl leading-relaxed">
-              Tracks booking revenue, AI costs, gross booking value, and early monetization signals. This is the starting point before adding concierge, partner, sponsored campaign, and visa referral revenue streams.
+              Tracks canonical booking revenue, payment/provider status, AI costs, gross booking value, and early monetization signals. This is the starting point before adding concierge, partner, sponsored campaign, and visa referral revenue streams.
             </p>
           </div>
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue bg-brand-blue/10 px-3 py-1 rounded-full">
@@ -130,17 +157,21 @@ export function RevenueModule() {
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        <RevenueCard icon={<DollarSign size={18} />} label="Revenue Today" value={money(s.revenueToday)} sub="Confirmed or paid bookings" />
+        <RevenueCard icon={<DollarSign size={18} />} label="Revenue Today" value={money(s.revenueToday)} sub="Reconciled bookings only" />
         <RevenueCard icon={<CircleDollarSign size={18} />} label="Revenue This Month" value={money(s.revenueThisMonth)} sub="Paid revenue recognized" />
-        <RevenueCard icon={<CreditCard size={18} />} label="Gross Booking Value" value={money(s.grossBookingValue)} sub={`${s.totalBookings} bookings this month`} />
+        <RevenueCard icon={<CreditCard size={18} />} label="Captured Payments" value={money(s.capturedPayments || 0)} sub={`${s.paymentPaid || 0} paid payment rows`} />
         <RevenueCard icon={<Zap size={18} />} label="AI Cost This Month" value={money(s.aiCostMonth)} sub={`${money(s.aiCostToday)} today`} />
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <RevenueCard icon={<Receipt size={18} />} label="Estimated Net" value={money(s.estimatedNetRevenue)} sub="Revenue minus AI cost only" />
         <RevenueCard icon={<UsersIcon />} label="Paid Users" value={s.paidUsers} sub={`${money(s.revenuePerUser)} revenue/user`} />
-        <RevenueCard icon={<BarChart3 size={18} />} label="Confirmed Bookings" value={s.confirmedBookings} sub={`${s.pendingBookings} pending, ${s.failedBookings} failed`} />
-        <RevenueCard icon={<AlertTriangle size={18} />} label="Refunds/Cancels" value={s.cancelledBookings + s.refundedBookings} sub={`${s.cancelledBookings} cancelled, ${s.refundedBookings} refunded`} />
+        <RevenueCard icon={<BarChart3 size={18} />} label="Provider Status" value={s.providerConfirmed || 0} sub={`${s.providerPending || 0} pending, ${s.providerFailed || 0} failed`} />
+        <RevenueCard icon={<AlertTriangle size={18} />} label="Booking Issues" value={s.bookingIssues || 0} sub={`${s.p0BookingIssues || 0} P0, ${s.cancelledBookings + s.refundedBookings} cancels/refunds`} />
+      </div>
+
+      <div className="rounded-xl border border-hairline bg-white p-4 text-sm text-body shadow-card">
+        Revenue source: <span className="font-semibold text-ink">{(s.revenueSource || 'unknown').replace(/_/g, ' ')}</span>. Recognition requires payment, provider, local booking, and trip item state to reconcile.
       </div>
 
       {data.notes.length > 0 && (
@@ -155,7 +186,7 @@ export function RevenueModule() {
       <div className="bg-white rounded-xl border border-hairline p-5 shadow-card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-ink tracking-tight">Revenue by Category</h3>
-          <span className="text-[11px] text-muted">Gross vs paid</span>
+          <span className="text-[11px] text-muted">Gross vs recognized</span>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={chartData}>
@@ -171,8 +202,14 @@ export function RevenueModule() {
 
       <div className="grid grid-cols-3 gap-4">
         <BreakdownTable title="By Category" rows={data.breakdowns.byCategory} />
+        <BreakdownTable title="By Source" rows={data.breakdowns.bySource || []} />
+        <BreakdownTable title="By Provider Status" rows={data.breakdowns.byProviderStatus || []} />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <BreakdownTable title="By Payment Status" rows={data.breakdowns.byPaymentStatus || []} />
         <BreakdownTable title="By Provider" rows={data.breakdowns.byProvider} />
-        <BreakdownTable title="By Status" rows={data.breakdowns.byStatus} />
+        <BreakdownTable title="By Recovery State" rows={data.breakdowns.byRecoveryState || []} />
       </div>
     </div>
   );

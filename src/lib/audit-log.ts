@@ -50,7 +50,8 @@ export type AuditEntityType =
   | 'default_header_image'
   | 'concierge_order'
   | 'admin_user'
-  | 'api_credit_status';
+  | 'api_credit_status'
+  | 'launch_readiness_task';
 
 export type AuditAction =
   // Auth
@@ -81,7 +82,10 @@ export type AuditAction =
   | 'partner_place_linked' | 'partner_place_unlinked'
   | 'promo_created' | 'promo_deactivated' | 'promo_used_manually'
   | 'api_key_status_changed' | 'api_key_rotated'
-  | 'billing_credit_updated';
+  | 'billing_credit_updated'
+  // Launch readiness
+  | 'launch_task_created' | 'launch_task_updated' | 'launch_task_status_changed'
+  | 'launch_task_approved';
 
 export interface AdminContext {
   id: string;

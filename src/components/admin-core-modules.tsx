@@ -7,9 +7,10 @@ function titleCase(value: unknown) {
   return String(value || 'unknown').replace(/_/g, ' ');
 }
 
-function money(value: unknown) {
+function money(value: unknown, currency = 'USD') {
   const n = typeof value === 'number' ? value : parseFloat(String(value ?? 0));
-  return `$${(Number.isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const amount = (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return currency === 'USD' ? `$${amount}` : `${currency} ${amount}`;
 }
 
 function Shell({ title, description, icon, children, onRefresh }: { title: string; description: string; icon: any; children: any; onRefresh?: () => void }) {
@@ -35,7 +36,51 @@ export function TravelersModule() {
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Travelers" error={error} />;
   const users = data.users || [];
   const completed = users.filter((u: any) => u.onboarding_completed || u.profile_completed).length;
-  return <Shell title="Travelers" description="View traveler accounts, profile completion, location signals, and lifecycle readiness." icon={<Users size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Travelers" value={data.total || users.length} sub="Total accounts" /><Stat label="Loaded" value={users.length} sub="Current page" /><Stat label="Completed profiles" value={completed} sub="Profile/onboarding flag" /><Stat label="Needs follow-up" value={Math.max(users.length - completed, 0)} sub="Incomplete profiles" /></div><SimpleTable headers={['Traveler','Location','Profile','Created']} rows={users.map((u: any) => [<div><div className="font-semibold text-ink">{u.display_name || 'Unnamed'}</div><div className="text-[11px] text-muted">{u.email || u.id}</div></div>, [u.city, u.country].filter(Boolean).join(', ') || '—', u.onboarding_completed || u.profile_completed ? 'Complete' : 'Incomplete', u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'])} empty="No travelers found." /></Shell>;
+  const summary = data.summary || {};
+
+  return (
+    <Shell title="Travelers" description="View traveler accounts, profile completion, location signals, lifecycle readiness, and canonical booking health." icon={<Users size={19} />} onRefresh={reload}>
+      {data.bookingNote && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.bookingNote}</div>}
+
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="Travelers" value={data.total || users.length} sub={`${users.length} loaded`} />
+        <Stat label="Completed profiles" value={completed} sub={`${Math.max(users.length - completed, 0)} incomplete`} />
+        <Stat label="Travelers with bookings" value={summary.travelersWithBookings ?? 0} sub={`${money(summary.capturedPayments || 0)} captured`} />
+        <Stat label="Booking issues" value={summary.travelersWithBookingIssues ?? 0} sub={`${money(summary.recognizedRevenue || 0)} recognized`} />
+      </div>
+
+      <SimpleTable
+        headers={['Traveler','Location','Profile','Bookings','Booking health','Created']}
+        rows={users.map((u: any) => {
+          const booking = u.booking_summary || {};
+          const sources = Array.isArray(booking.sources) && booking.sources.length ? booking.sources.join(', ') : 'unknown source';
+          const providers = Array.isArray(booking.providers) && booking.providers.length ? booking.providers.join(', ') : 'unknown provider';
+          const bookingTypes = Array.isArray(booking.bookingTypes) && booking.bookingTypes.length ? booking.bookingTypes.join(', ') : 'no booking types';
+
+          return [
+            <div><div className="font-semibold text-ink">{u.display_name || 'Unnamed'}</div><div className="text-[11px] text-muted">{u.email || u.id}</div></div>,
+            [u.city, u.country].filter(Boolean).join(', ') || '—',
+            u.onboarding_completed || u.profile_completed ? 'Complete' : 'Incomplete',
+            <div>
+              <div className="font-semibold text-ink">{booking.total || 0} bookings · {booking.tripCount || 0} trips</div>
+              <div className="text-[11px] text-muted">{money(booking.recognizedRevenue || 0)} recognized · {money(booking.capturedPayments || 0)} captured</div>
+              <div className="text-[11px] text-muted capitalize">{bookingTypes}</div>
+            </div>,
+            <div>
+              <div className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${booking.issues ? 'bg-status-danger-bg text-status-danger' : booking.total ? 'bg-status-success-bg text-status-success' : 'bg-surface text-muted'}`}>
+                {booking.issues ? `${booking.issues} issue${booking.issues === 1 ? '' : 's'}` : booking.total ? 'No booking issues' : 'No bookings'}
+              </div>
+              <div className="mt-1 text-[11px] text-muted">{booking.paymentPaid || 0}/{booking.total || 0} paid · {booking.providerConfirmed || 0} confirmed · {booking.providerPending || 0} pending · {booking.providerFailed || 0} failed</div>
+              <div className="text-[11px] text-muted capitalize">{providers} · {sources}</div>
+              {(booking.p0Issues || 0) > 0 && <div className="mt-1 text-[11px] font-semibold text-status-danger">{booking.p0Issues} P0 recovery issue{booking.p0Issues === 1 ? '' : 's'}</div>}
+            </div>,
+            u.created_at ? new Date(u.created_at).toLocaleDateString() : '—',
+          ];
+        })}
+        empty="No travelers found."
+      />
+    </Shell>
+  );
 }
 
 export function TripsModule() {
@@ -43,7 +88,51 @@ export function TripsModule() {
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Trips" error={error} />;
   const trips = data.trips || [];
   const active = trips.filter((t: any) => t.status === 'active' || t.status === 'planned').length;
-  return <Shell title="Trips" description="Monitor saved trips, active itineraries, abandoned plans, islands, and traveler planning progress." icon={<Compass size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Trips" value={data.total || trips.length} /><Stat label="Active/planned" value={active} /><Stat label="Draft/other" value={Math.max(trips.length - active, 0)} /><Stat label="Loaded" value={trips.length} /></div><SimpleTable headers={['Trip','Traveler','Status','Islands','Created']} rows={trips.map((t: any) => [<div><div className="font-semibold text-ink">{t.name || 'Untitled trip'}</div><div className="text-[11px] text-muted">{t.id}</div></div>, t.users?.display_name || t.users?.email || t.user_id || '—', titleCase(t.status), Array.isArray(t.islands) ? t.islands.join(', ') : t.islands || '—', t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'])} empty="No trips found." /></Shell>;
+  const summary = data.summary || {};
+
+  return (
+    <Shell title="Trips" description="Monitor saved trips, active itineraries, abandoned plans, islands, traveler progress, and canonical booking health." icon={<Compass size={19} />} onRefresh={reload}>
+      {data.bookingNote && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.bookingNote}</div>}
+
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="Trips" value={data.total || trips.length} sub={`${trips.length} loaded`} />
+        <Stat label="Active/planned" value={active} sub={`${Math.max(trips.length - active, 0)} draft/other`} />
+        <Stat label="Trips with bookings" value={summary.tripsWithBookings ?? 0} sub={`${money(summary.capturedPayments || 0)} captured`} />
+        <Stat label="Booking issues" value={summary.tripsWithBookingIssues ?? 0} sub={`${money(summary.recognizedRevenue || 0)} recognized`} />
+      </div>
+
+      <SimpleTable
+        headers={['Trip','Traveler','Status','Bookings','Booking health','Created']}
+        rows={trips.map((t: any) => {
+          const booking = t.booking_summary || {};
+          const sources = Array.isArray(booking.sources) && booking.sources.length ? booking.sources.join(', ') : 'unknown source';
+          const providers = Array.isArray(booking.providers) && booking.providers.length ? booking.providers.join(', ') : 'unknown provider';
+          const bookingTypes = Array.isArray(booking.bookingTypes) && booking.bookingTypes.length ? booking.bookingTypes.join(', ') : 'no booking types';
+
+          return [
+            <div><div className="font-semibold text-ink">{t.name || 'Untitled trip'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
+            t.users?.display_name || t.users?.email || t.user_id || '—',
+            titleCase(t.status),
+            <div>
+              <div className="font-semibold text-ink">{booking.total || 0} bookings</div>
+              <div className="text-[11px] text-muted">{money(booking.recognizedRevenue || 0)} recognized · {money(booking.capturedPayments || 0)} captured</div>
+              <div className="text-[11px] text-muted capitalize">{bookingTypes}</div>
+            </div>,
+            <div>
+              <div className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${booking.issues ? 'bg-status-danger-bg text-status-danger' : booking.total ? 'bg-status-success-bg text-status-success' : 'bg-surface text-muted'}`}>
+                {booking.issues ? `${booking.issues} issue${booking.issues === 1 ? '' : 's'}` : booking.total ? 'No booking issues' : 'No bookings'}
+              </div>
+              <div className="mt-1 text-[11px] text-muted">{booking.paymentPaid || 0}/{booking.total || 0} paid · {booking.providerConfirmed || 0} confirmed · {booking.providerPending || 0} pending · {booking.providerFailed || 0} failed</div>
+              <div className="text-[11px] text-muted capitalize">{providers} · {sources}</div>
+              {(booking.p0Issues || 0) > 0 && <div className="mt-1 text-[11px] font-semibold text-status-danger">{booking.p0Issues} P0 recovery issue{booking.p0Issues === 1 ? '' : 's'}</div>}
+            </div>,
+            t.created_at ? new Date(t.created_at).toLocaleDateString() : '—',
+          ];
+        })}
+        empty="No trips found."
+      />
+    </Shell>
+  );
 }
 
 export function DestinationIntelligenceModule() {
@@ -72,15 +161,126 @@ export function BillingModule() {
   const { data, loading, error, reload } = useApi<any>('/api/billing');
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Billing & APIs" error={error} />;
   const s = data.summary || {};
+  const bookings = s.bookings || {};
   const credits = data.credits || [];
-  return <Shell title="Billing & APIs" description="Monitor AI/API cost, credit balances, provider health, and booking/revenue cost context." icon={<CreditCard size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="AI cost today" value={money(s.aiCostToday || 0)} /><Stat label="AI cost month" value={money(s.aiCostMonth || 0)} /><Stat label="API cost month" value={money(s.apiCostMonth || 0)} /><Stat label="Total cost month" value={money(s.totalCostMonth || 0)} /></div>{data.needsMigration && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}<SimpleTable headers={['Service','Key status','Balance','Monthly usage','Plan']} rows={credits.map((c: any) => [c.service, titleCase(c.api_key_status), c.credit_balance ?? '—', c.current_month_usage ?? '—', c.plan_tier || '—'])} empty="No API credit status rows yet." /></Shell>;
+  return (
+    <Shell title="Billing & APIs" description="Monitor AI/API cost, credit balances, provider health, and canonical booking revenue context." icon={<CreditCard size={19} />} onRefresh={reload}>
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="AI cost today" value={money(s.aiCostToday || 0)} />
+        <Stat label="AI cost month" value={money(s.aiCostMonth || 0)} />
+        <Stat label="API cost month" value={money(s.apiCostMonth || 0)} />
+        <Stat label="Total cost month" value={money(s.totalCostMonth || 0)} />
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="Recognized revenue" value={money(s.revenueMonth || 0)} sub="Canonical bookings only" />
+        <Stat label="Gross booking value" value={money(s.grossBookingValueMonth || 0)} sub={`${bookings.total || 0} monthly bookings`} />
+        <Stat label="Captured payments" value={money(s.capturedPaymentsMonth || 0)} sub={`${bookings.paymentPaid || 0} paid payment rows`} />
+        <Stat label="Booking issues" value={bookings.issues || 0} sub={`${bookings.providerFailed || 0} provider failed, ${bookings.providerPending || 0} pending`} />
+      </div>
+
+      {s.revenueSource === 'canonical_bookings' && (
+        <div className="rounded-xl border border-hairline bg-surface p-4 text-sm text-body">
+          Revenue is calculated from reconciled canonical booking rows. Legacy Stripe summary views are not used for revenue recognition here.
+        </div>
+      )}
+
+      {data.needsMigration && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}
+      <SimpleTable
+        headers={['Service','Key status','Balance','Monthly usage','Plan']}
+        rows={credits.map((c: any) => [c.service, titleCase(c.api_key_status), c.credit_balance ?? '—', c.current_month_usage ?? '—', c.plan_tier || '—'])}
+        empty="No API credit status rows yet."
+      />
+    </Shell>
+  );
 }
 
 export function SupportModule() {
   const { data, loading, error, reload } = useApi<any>('/api/support');
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Support" error={error} />;
   const tickets = data.tickets || [];
-  return <Shell title="Support" description="Manage traveler support tickets, booking issues, Concierge follow-up, and internal response status." icon={<HelpCircle size={19} />} onRefresh={reload}>{data.note && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}<div className="grid grid-cols-4 gap-3"><Stat label="Tickets" value={tickets.length} /><Stat label="Open" value={tickets.filter((t: any) => t.status === 'open').length} /><Stat label="In progress" value={tickets.filter((t: any) => t.status === 'in_progress').length} /><Stat label="Resolved" value={tickets.filter((t: any) => t.status === 'resolved').length} /></div><SimpleTable headers={['Ticket','Traveler','Status','Messages','Created']} rows={tickets.map((t: any) => [<div><div className="font-semibold text-ink">{t.subject || 'Support request'}</div><div className="text-[11px] text-muted">{t.id}</div></div>, t.users?.display_name || t.users?.email || t.user_id || '—', titleCase(t.status), Array.isArray(t.support_messages) ? t.support_messages.length : 0, t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'])} empty="No support tickets yet." /></Shell>;
+  const bookingIssues = data.bookingIssues || [];
+  const summary = data.summary || {};
+
+  return (
+    <Shell title="Support" description="Manage traveler support tickets, booking issues, Concierge follow-up, and internal response status." icon={<HelpCircle size={19} />} onRefresh={reload}>
+      {data.note && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}
+      {data.bookingIssueNote && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.bookingIssueNote}</div>}
+
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="Tickets" value={summary.tickets ?? tickets.length} sub={`${summary.openTickets ?? tickets.filter((t: any) => t.status === 'open').length} open`} />
+        <Stat label="In progress" value={summary.inProgressTickets ?? tickets.filter((t: any) => t.status === 'in_progress').length} sub={`${summary.resolvedTickets ?? tickets.filter((t: any) => t.status === 'resolved').length} resolved`} />
+        <Stat label="Booking issues" value={summary.bookingIssues ?? bookingIssues.length} sub={`${summary.canonicalBookingsReviewed ?? 0} canonical rows reviewed`} />
+        <Stat label="P0 booking issues" value={summary.p0BookingIssues ?? 0} sub={`${summary.paymentCapturedProviderFailed ?? 0} payment captured/provider failed`} />
+      </div>
+
+      <section aria-label="Support booking recovery queue" className="bg-white rounded-xl border border-hairline overflow-hidden shadow-card">
+        <div className="px-5 py-4 border-b border-hairline bg-surface/50">
+          <div className="text-[11px] uppercase tracking-wider font-bold text-status-danger mb-1">Canonical booking recovery</div>
+          <h3 className="text-lg font-display font-bold text-ink tracking-tight">Provider and payment issues</h3>
+          <p className="mt-1 text-sm text-body">Support uses canonical bookings plus trip items here. Audit/provider payload tables remain secondary evidence, not the operational source of truth.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-hairline bg-surface/50">
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Booking</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Traveler</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Payment / Provider</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Recovery</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted tracking-wider uppercase">Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookingIssues.map((issue: any) => (
+                <tr key={issue.id} className="border-b border-hairline last:border-0 hover:bg-surface/50">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-ink">{issue.trip_item_name || titleCase(issue.booking_type)}</div>
+                    <div className="font-mono text-[11px] text-muted">{issue.id?.slice?.(0, 8) || issue.id} · {issue.provider_reference || issue.stripe_payment_intent_id || 'No external ref'}</div>
+                    <div className="mt-1 text-[11px] text-muted capitalize">{issue.provider || 'unknown provider'} · {issue.source_surface || 'unknown source'} · {money(issue.amount, issue.currency || 'USD')}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-mono text-xs text-ink">{issue.user_id || 'No user linked'}</div>
+                    <div className="text-[11px] text-muted">Trip: {issue.trip_id || 'No trip linked'}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-status-warning">Payment: {titleCase(issue.payment_status)}</span>
+                      <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-status-warning">Provider: {titleCase(issue.provider_status)}</span>
+                      <span className="text-[11px] text-muted">Local: {titleCase(issue.status)}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="rounded-full bg-status-danger-bg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-status-danger">{issue.recovery?.priority || 'P?'}</span>
+                      <span className="font-semibold text-ink">{issue.recovery?.label || titleCase(issue.failure_state)}</span>
+                      <span className="text-xs leading-5 text-body">{issue.recovery?.summary || 'Review booking state before traveler follow-up.'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-body">
+                    <div className="max-w-sm text-xs leading-5">{issue.recovery?.nextAction || 'Review payment, provider, and local state.'}</div>
+                  </td>
+                </tr>
+              ))}
+              {bookingIssues.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted">No canonical booking issues need Support action.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <SimpleTable
+        headers={['Ticket','Traveler','Status','Messages','Created']}
+        rows={tickets.map((t: any) => [
+          <div><div className="font-semibold text-ink">{t.subject || 'Support request'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
+          t.users?.display_name || t.users?.email || t.user_id || '—',
+          titleCase(t.status),
+          Array.isArray(t.support_messages) ? t.support_messages.length : 0,
+          t.created_at ? new Date(t.created_at).toLocaleDateString() : '—',
+        ])}
+        empty="No support tickets yet."
+      />
+    </Shell>
+  );
 }
 
 export function AuditModule() {

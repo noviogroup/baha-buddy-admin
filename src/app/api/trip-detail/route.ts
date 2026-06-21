@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
+import { enrichBookingRowsWithLoadedTripItems, isRecognizedRevenue, normalizedStatus, num } from '@/lib/booking-reconciliation';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,26 +53,36 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
       throw tripRes.error;
     }
 
-    // Budget breakdown from confirmed bookings.
-    const bookings = (bookingsRes.data || []) as any[];
+    const accommodations = (accomRes.data || []) as any[];
+    const flights = (flightsRes.data || []) as any[];
+    const activities = (activitiesRes.data || []) as any[];
+    const tripItems = [
+      ...accommodations.map(item => ({ ...item, kind: 'accommodation' as const })),
+      ...flights.map(item => ({ ...item, kind: 'flight' as const })),
+      ...activities.map(item => ({ ...item, kind: 'activity' as const })),
+    ];
+    const bookings = enrichBookingRowsWithLoadedTripItems(
+      (bookingsRes.data || []) as any[],
+      tripItems,
+    );
     const budgetByCategory: Record<string, number> = {
       accommodation: 0, flight: 0, activity: 0, other: 0,
     };
-    bookings.filter((b: any) => b.status === 'confirmed').forEach((b: any) => {
-      const cat = ['accommodation', 'flight', 'activity'].includes(b.booking_type) ? b.booking_type : 'other';
-      budgetByCategory[cat] += parseFloat(b.amount) || 0;
+    bookings.filter(isRecognizedRevenue).forEach((booking: any) => {
+      const cat = bookingCategory(booking.booking_type);
+      budgetByCategory[cat] += num(booking.amount);
     });
     const totalSpent = Object.values(budgetByCategory).reduce((a, b) => a + b, 0);
-    const budgetEstimate = parseFloat((tripRes.data as any)?.budget_estimate) || 0;
+    const budgetEstimate = num((tripRes.data as any)?.budget_estimate);
 
     return NextResponse.json({
       trip: tripRes.data,
       bookings,
       threads: threadsRes.data || [],
       collaborators: collabRes.data || [],
-      accommodations: accomRes.data || [],
-      flights: flightsRes.data || [],
-      activities: activitiesRes.data || [],
+      accommodations,
+      flights,
+      activities,
       budget: {
         byCategory: budgetByCategory,
         totalSpent: Math.round(totalSpent * 100) / 100,
@@ -92,3 +103,11 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 });
+
+function bookingCategory(value: unknown): 'accommodation' | 'flight' | 'activity' | 'other' {
+  const bookingType = normalizedStatus(value);
+  if (['accommodation', 'hotel', 'stay', 'stays', 'resort', 'villa', 'home', 'house'].includes(bookingType)) return 'accommodation';
+  if (bookingType.includes('flight')) return 'flight';
+  if (['activity', 'activities', 'tour', 'tours', 'experience'].includes(bookingType)) return 'activity';
+  return 'other';
+}

@@ -190,6 +190,7 @@ describe('GET /api/bookings status model', () => {
       refunded: 1,
       grossBookingValue: 3300,
       netRevenue: 260,
+      confirmedRevenue: 0,
     });
     expect(financialQuery.limit).toHaveBeenCalledWith(6);
     expect(canonicalQuery.in).toHaveBeenCalledWith('id', financialRows.map((row) => row.id));
@@ -221,6 +222,18 @@ describe('GET /api/bookings status model', () => {
         partner_payout_amount: 0,
         gross_margin_after_payout: 120,
       },
+      {
+        id: 'mobile-stay-good',
+        booking_type: 'hotel',
+        provider: 'liteapi',
+        status: 'confirmed',
+        paid_at: '2026-06-17T10:45:00Z',
+        stripe_payment_intent_id: 'pi_good_stay',
+        gross_booking_value: 800,
+        net_revenue: 80,
+        partner_payout_amount: 0,
+        gross_margin_after_payout: 80,
+      },
     ];
     const canonicalRows = [
       {
@@ -231,6 +244,11 @@ describe('GET /api/bookings status model', () => {
       {
         id: 'mobile-stay-failed',
         stripe_payment_intent_id: 'pi_failed_stay',
+        financial_metadata: { source_surface: 'mobile' },
+      },
+      {
+        id: 'mobile-stay-good',
+        stripe_payment_intent_id: 'pi_good_stay',
         financial_metadata: { source_surface: 'mobile' },
       },
     ];
@@ -249,6 +267,13 @@ describe('GET /api/bookings status model', () => {
         booking_reference: null,
         stripe_payment_intent_id: 'pi_failed_stay',
       },
+      {
+        id: 'trip-accommodation-good',
+        name: 'Grand Hyatt Baha Mar',
+        status: 'booked',
+        booking_reference: 'LITE-GOOD-1',
+        stripe_payment_intent_id: 'pi_good_stay',
+      },
     ];
 
     const financialQuery = makeQuery({ data: financialRows, error: null });
@@ -263,7 +288,7 @@ describe('GET /api/bookings status model', () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const response = await GET(new Request('http://localhost.test/api/bookings?limit=2'));
+    const response = await GET(new Request('http://localhost.test/api/bookings?limit=3'));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -286,10 +311,26 @@ describe('GET /api/bookings status model', () => {
       trip_item_status: 'failed',
       trip_item_name: 'Ocean Club',
       failure_state: 'payment_succeeded_provider_failed',
+      reconciled: false,
+    });
+    expect(byId(body.bookings, 'mobile-stay-good')).toMatchObject({
+      source_surface: 'mobile',
+      payment_status: 'paid',
+      provider_status: 'confirmed',
+      provider_reference: 'LITE-GOOD-1',
+      trip_item_id: 'trip-accommodation-good',
+      trip_item_status: 'booked',
+      trip_item_name: 'Grand Hyatt Baha Mar',
+      failure_state: 'none',
+      reconciled: true,
+    });
+    expect(body.summary).toMatchObject({
+      confirmedRevenue: 80,
     });
     expect(accommodationsQuery.in).toHaveBeenCalledWith('stripe_payment_intent_id', [
       'pi_refunded_stay',
       'pi_failed_stay',
+      'pi_good_stay',
     ]);
   });
 });

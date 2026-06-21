@@ -2,6 +2,7 @@
 
 import { CreditCard, ExternalLink, Save, X } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
+import { bookingRecoveryGuidance, recoveryToneClass } from '@/lib/booking-recovery';
 
 type BookingRow = {
   id: string;
@@ -41,6 +42,8 @@ function StatusBadge({ status }: { status: string | null }) {
 }
 
 export function BookingDetailPanel({ booking, onClose, onChanged }: { booking: BookingRow; onClose: () => void; onChanged: () => Promise<void> | void }) {
+  const recovery = bookingRecoveryGuidance(booking.failure_state);
+
   const updateStatus = async (status: string) => {
     const res = await apiFetch('/api/bookings', {
       method: 'PATCH',
@@ -98,7 +101,24 @@ export function BookingDetailPanel({ booking, onClose, onChanged }: { booking: B
       <div className="px-5 pb-5 grid grid-cols-3 gap-3 text-xs">
         <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Source:</span> {booking.source_surface || 'unknown'}</div>
         <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Provider status:</span> {booking.provider_status || 'pending'}</div>
-        <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Failure state:</span> {booking.failure_state || 'none'}</div>
+        <div className="rounded-lg bg-surface p-3"><span className="font-bold text-ink">Recovery state:</span> {recovery.label}</div>
+      </div>
+
+      <div className="px-5 pb-5">
+        <section aria-label="Booking recovery checklist" className={`rounded-xl border p-4 ${recoveryToneClass(recovery.tone)}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider font-bold mb-1">Recovery checklist</div>
+              <h4 className="text-base font-display font-bold text-ink">{recovery.label}</h4>
+              <p className="mt-1 text-sm leading-5 text-body">{recovery.summary}</p>
+            </div>
+            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">{recovery.priority}</span>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-ink">{recovery.nextAction}</p>
+          <ul className="mt-3 grid gap-2 text-xs text-body">
+            {recovery.checklist.map(item => <li key={item} className="flex gap-2"><span aria-hidden="true">•</span><span>{item}</span></li>)}
+          </ul>
+        </section>
       </div>
 
       <div className="px-5 pb-5 text-xs text-muted flex items-center gap-1.5">

@@ -1,7 +1,24 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
+import { enrichBookingRows, isRecognizedRevenue, num } from '@/lib/booking-reconciliation';
 
 export const dynamic = 'force-dynamic';
+
+type BookingRow = {
+  id: string;
+  amount?: number | string | null;
+  status?: string | null;
+  paid_at?: string | null;
+  stripe_payment_intent_id?: string | null;
+  booking_type?: string | null;
+  booking_reference?: string | null;
+  external_reference?: string | null;
+  financial_metadata?: Record<string, unknown> | null;
+  payment_status?: string;
+  provider_status?: string;
+  failure_state?: string;
+  reconciled?: boolean;
+};
 
 export const GET = withAdminAuth(async (_request, { supabase }) => {
   try {
@@ -26,8 +43,8 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
       supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', todayStart),
       supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
       supabase.from('trips').select('id, status, islands'),
-      supabase.from('bookings').select('id, amount, status'),
-      supabase.from('bookings').select('id, amount, status').gte('created_at', monthStart),
+      supabase.from('bookings').select('id, amount, status, paid_at, stripe_payment_intent_id, booking_type, booking_reference, external_reference, financial_metadata'),
+      supabase.from('bookings').select('id, amount, status, paid_at, stripe_payment_intent_id, booking_type, booking_reference, external_reference, financial_metadata').gte('created_at', monthStart),
       supabase.from('chat_messages').select('id', { count: 'exact', head: true }),
       supabase.from('ai_usage_log').select('estimated_cost_usd').gte('created_at', todayStart),
       supabase.from('ai_usage_log').select('estimated_cost_usd').gte('created_at', monthStart),
@@ -52,10 +69,10 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
       .slice(0, 10);
 
     // Revenue
-    const confirmedBookings = (bookingsAll.data || []).filter((b: any) => b.status === 'confirmed');
-    const totalRevenue = confirmedBookings.reduce((sum: number, b: any) => sum + (parseFloat(b.amount) || 0), 0);
-    const confirmedMonth = (bookingsMonth.data || []).filter((b: any) => b.status === 'confirmed');
-    const revenueThisMonth = confirmedMonth.reduce((sum: number, b: any) => sum + (parseFloat(b.amount) || 0), 0);
+    const allBookings = await enrichBookingRows(supabase, (bookingsAll.data || []) as BookingRow[]);
+    const monthBookings = await enrichBookingRows(supabase, (bookingsMonth.data || []) as BookingRow[]);
+    const totalRevenue = allBookings.filter(isRecognizedRevenue).reduce((sum: number, b: BookingRow) => sum + num(b.amount), 0);
+    const revenueThisMonth = monthBookings.filter(isRecognizedRevenue).reduce((sum: number, b: BookingRow) => sum + num(b.amount), 0);
 
     // AI costs
     const aiTodayCost = (aiCostToday.data || []).reduce((sum: number, r: any) => sum + (parseFloat(r.estimated_cost_usd) || 0), 0);

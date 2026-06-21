@@ -1,8 +1,30 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin-auth';
 import { logAudit } from '@/lib/audit-log';
+import { enrichBookingRows, isRecognizedRevenue, num } from '@/lib/booking-reconciliation';
 
 export const dynamic = 'force-dynamic';
+
+type BillingBookingRow = {
+  id: string;
+  user_id?: string | null;
+  trip_id?: string | null;
+  booking_type?: string | null;
+  provider?: string | null;
+  amount?: number | string | null;
+  currency?: string | null;
+  status?: string | null;
+  paid_at?: string | null;
+  created_at?: string | null;
+  stripe_payment_intent_id?: string | null;
+  booking_reference?: string | null;
+  external_reference?: string | null;
+  financial_metadata?: Record<string, unknown> | null;
+  payment_status?: string | null;
+  provider_status?: string | null;
+  failure_state?: string | null;
+  reconciled?: boolean;
+};
 
 // ─── GET /api/billing ────────────────────────────────────────────────────
 // Returns credit status for all API services + combined daily costs.
@@ -71,33 +93,39 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
       .filter((r: any) => r.date >= monthStart.slice(0, 10))
       .reduce((sum: number, r: any) => sum + (parseFloat(r.total_cost_usd) || 0), 0);
 
-    // 7. Stripe revenue this month
-    let stripeRevenue: any[] = [];
-    try {
-      const { data } = await supabase
-        .from('stripe_revenue_summary')
-        .select('*')
-        .limit(60);
-      stripeRevenue = data || [];
-    } catch { /* view may not exist yet */ }
-
-    const revenueMonth = stripeRevenue
-      .filter((r: any) => r.date >= monthStart.slice(0, 10))
-      .reduce((sum: number, r: any) => sum + (parseFloat(r.revenue) || 0), 0);
-
-    // 8. Bookings summary
+    // 7. Booking revenue and status summary. Revenue recognition must use
+    // the same canonical reconciliation model as Bookings/Revenue/Payments.
     const { data: bookings } = await supabase
       .from('bookings')
-      .select('status, amount')
+      .select('id,user_id,trip_id,booking_type,provider,amount,currency,status,paid_at,created_at,stripe_payment_intent_id,booking_reference,external_reference,financial_metadata')
       .gte('created_at', monthStart);
 
+    const canonicalBookings = await enrichBookingRows(supabase, (bookings || []) as BillingBookingRow[]);
+    const revenueMonth = canonicalBookings
+      .filter(isRecognizedRevenue)
+      .reduce((sum: number, booking: BillingBookingRow) => sum + num(booking.amount), 0);
+    const grossBookingValueMonth = canonicalBookings
+      .reduce((sum: number, booking: BillingBookingRow) => sum + num(booking.amount), 0);
+    const capturedPaymentsMonth = canonicalBookings
+      .filter((booking: BillingBookingRow) => booking.payment_status === 'paid')
+      .reduce((sum: number, booking: BillingBookingRow) => sum + num(booking.amount), 0);
+
     const bookingSummary = {
-      total: bookings?.length || 0,
-      confirmed: bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
-      pending: bookings?.filter((b: any) => b.status === 'pending').length || 0,
-      failed: bookings?.filter((b: any) => b.status === 'failed').length || 0,
-      cancelled: bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
-      refunded: bookings?.filter((b: any) => b.status === 'refunded').length || 0,
+      total: canonicalBookings.length,
+      confirmed: canonicalBookings.filter((b: BillingBookingRow) => b.status === 'confirmed').length,
+      pending: canonicalBookings.filter((b: BillingBookingRow) => b.status === 'pending').length,
+      failed: canonicalBookings.filter((b: BillingBookingRow) => b.status === 'failed').length,
+      cancelled: canonicalBookings.filter((b: BillingBookingRow) => b.status === 'cancelled').length,
+      refunded: canonicalBookings.filter((b: BillingBookingRow) => b.status === 'refunded').length,
+      paymentPaid: canonicalBookings.filter((b: BillingBookingRow) => b.payment_status === 'paid').length,
+      paymentPending: canonicalBookings.filter((b: BillingBookingRow) => b.payment_status === 'pending').length,
+      paymentFailed: canonicalBookings.filter((b: BillingBookingRow) => b.payment_status === 'failed').length,
+      paymentRefunded: canonicalBookings.filter((b: BillingBookingRow) => b.payment_status === 'refunded').length,
+      providerConfirmed: canonicalBookings.filter((b: BillingBookingRow) => b.provider_status === 'confirmed').length,
+      providerPending: canonicalBookings.filter((b: BillingBookingRow) => b.provider_status === 'pending').length,
+      providerFailed: canonicalBookings.filter((b: BillingBookingRow) => b.provider_status === 'failed').length,
+      issues: canonicalBookings.filter((b: BillingBookingRow) => b.failure_state && b.failure_state !== 'none').length,
+      reconciled: canonicalBookings.filter((b: BillingBookingRow) => b.reconciled === true).length,
     };
 
     return NextResponse.json({
@@ -105,13 +133,17 @@ export const GET = withAdminAuth(async (_request, { supabase }) => {
       aiDaily: aiDaily || [],
       apiDaily,
       allDailyCosts,
-      stripeRevenue,
+      bookingRevenue: canonicalBookings,
+      stripeRevenue: [],
       summary: {
         aiCostToday: Math.round(aiTodayTotal * 100) / 100,
         aiCostMonth: Math.round(aiMonthTotal * 100) / 100,
         apiCostMonth: Math.round(apiMonthTotal * 100) / 100,
         totalCostMonth: Math.round((aiMonthTotal + apiMonthTotal) * 100) / 100,
         revenueMonth: Math.round(revenueMonth * 100) / 100,
+        grossBookingValueMonth: Math.round(grossBookingValueMonth * 100) / 100,
+        capturedPaymentsMonth: Math.round(capturedPaymentsMonth * 100) / 100,
+        revenueSource: 'canonical_bookings',
         bookings: bookingSummary,
       },
     });

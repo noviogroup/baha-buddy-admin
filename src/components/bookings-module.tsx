@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, CreditCard, DollarSign, FileText, RefreshCw, WalletCards } from 'lucide-react';
 import { useApi } from '@/lib/use-api';
 import { BookingDetailPanel } from '@/components/booking-detail-panel';
+import { bookingRecoveryGuidance, needsBookingSupport, recoveryToneClass } from '@/lib/booking-recovery';
 
 type BookingRow = {
   id: string;
@@ -57,10 +58,61 @@ function PayoutBadge({ status }: { status?: string | null }) {
 }
 
 function FailureBadge({ state }: { state?: string | null }) {
-  const value = state || 'none';
-  if (value === 'none') return null;
-  const cls = value.includes('failed') ? 'bg-status-danger-bg text-status-danger' : 'bg-status-warning-bg text-status-warning';
-  return <span className={`mt-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cls}`}>{value.replaceAll('_', ' ')}</span>;
+  const guidance = bookingRecoveryGuidance(state);
+  if (guidance.state === 'none') return null;
+  const cls = guidance.tone === 'danger' ? 'bg-status-danger-bg text-status-danger' : guidance.tone === 'warning' ? 'bg-status-warning-bg text-status-warning' : 'bg-surface text-muted';
+  return <span className={`mt-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cls}`}>{guidance.label}</span>;
+}
+
+function SupportAttentionQueue({ bookings, onSelect }: { bookings: BookingRow[]; onSelect: (booking: BookingRow) => void }) {
+  const queue = bookings.filter(booking => needsBookingSupport(booking.failure_state)).slice(0, 5);
+  const p0 = queue.filter(booking => bookingRecoveryGuidance(booking.failure_state).priority === 'P0').length;
+
+  return (
+    <section aria-label="Booking recovery queue" className="bg-white rounded-xl border border-hairline p-5 shadow-card">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="text-[11px] uppercase tracking-wider font-bold text-status-danger mb-1">Support attention</div>
+          <h3 className="text-lg font-display font-bold text-ink tracking-tight">Provider and payment recovery queue</h3>
+          <p className="text-sm text-body mt-1">These bookings need operational review before staff retry, refund, or mark a traveler-facing status as confirmed.</p>
+        </div>
+        <div className="rounded-xl bg-status-danger-bg px-3 py-2 text-right">
+          <div className="text-xl font-display font-bold text-status-danger">{queue.length}</div>
+          <div className="text-[11px] font-bold uppercase tracking-wide text-status-danger">{p0} P0</div>
+        </div>
+      </div>
+
+      {queue.length === 0 ? (
+        <div className="rounded-xl border border-hairline bg-surface px-4 py-3 text-sm text-body">No booking recovery issues in the current filter.</div>
+      ) : (
+        <div className="grid gap-3">
+          {queue.map(booking => {
+            const guidance = bookingRecoveryGuidance(booking.failure_state);
+            return (
+              <button key={booking.id} onClick={() => onSelect(booking)} className={`w-full text-left rounded-xl border p-4 transition hover:shadow-card ${recoveryToneClass(guidance.tone)}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wide">{guidance.priority}</span>
+                      <span className="text-sm font-display font-bold text-ink">{guidance.label}</span>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-body">{guidance.summary}</p>
+                  </div>
+                  <span className="font-mono text-[11px] text-muted">{booking.id.slice(0, 8)}…</span>
+                </div>
+                <div className="mt-3 grid grid-cols-4 gap-2 text-[11px]">
+                  <div><span className="font-bold text-ink">Source:</span> {booking.source_surface || 'unknown'}</div>
+                  <div><span className="font-bold text-ink">Payment:</span> {booking.payment_status || booking.status || 'pending'}</div>
+                  <div><span className="font-bold text-ink">Provider:</span> {booking.provider_status || 'pending'}</div>
+                  <div><span className="font-bold text-ink">Ref:</span> {booking.provider_reference || 'missing'}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
 }
 
 export function BookingsModule() {
@@ -79,6 +131,8 @@ export function BookingsModule() {
       <div className="bg-white rounded-xl border border-hairline p-5 shadow-card baha-gradient-card"><div className="flex items-start justify-between gap-4"><div><h2 className="text-2xl font-display font-bold text-ink tracking-tight mb-1">Booking Operations</h2><p className="text-sm text-body max-w-3xl leading-relaxed">Track canonical bookings with source surface, payment status, provider status, gross value, net revenue, payouts, margin, and support failure states.</p></div><button onClick={reload} className="px-3 py-1.5 rounded-lg bg-white border border-hairline text-xs font-semibold text-body hover:border-brand-blue"><RefreshCw size={13} className="inline mr-1" /> Refresh</button></div></div>
 
       <div className="grid grid-cols-4 gap-3"><Stat icon={<FileText size={18} />} label="Bookings" value={s.total || 0} sub={`${s.pending || 0} pending · ${s.confirmed || 0} confirmed`} /><Stat icon={<DollarSign size={18} />} label="Gross Booking Value" value={money(s.grossBookingValue || 0)} sub="Traveler-facing value" /><Stat icon={<CreditCard size={18} />} label="Net Revenue" value={money(s.netRevenue || s.confirmedRevenue || 0)} sub="Baha Buddy retained revenue" /><Stat icon={<WalletCards size={18} />} label="Partner Payouts" value={money(s.partnerPayouts || 0)} sub={`${money(s.marginAfterPayout || 0)} margin after payout`} /></div>
+
+      <SupportAttentionQueue bookings={data.bookings} onSelect={setSelected} />
 
       <div className="bg-white rounded-xl border border-hairline p-4 shadow-card"><div className="grid grid-cols-[160px_160px_160px_180px] gap-2"><select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white"><option value="all">All status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select><select value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white"><option value="all">All types</option><option value="hotel">Hotel</option><option value="flight">Flight</option><option value="activity">Activity</option><option value="visa">Visa</option><option value="concierge">Concierge</option></select><select value={filters.provider} onChange={e => setFilters({ ...filters, provider: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white"><option value="all">All providers</option><option value="stripe">Stripe</option><option value="duffel">Duffel</option><option value="liteapi">LiteAPI</option><option value="viator">Viator</option><option value="manual">Manual</option></select><select value={filters.payout_status} onChange={e => setFilters({ ...filters, payout_status: e.target.value })} className="border border-hairline rounded-lg px-3 py-2 text-sm bg-white"><option value="all">All payouts</option><option value="not_applicable">No payout</option><option value="pending">Pending payout</option><option value="approved">Approved payout</option><option value="paid">Paid</option><option value="cancelled">Cancelled payout</option></select></div></div>
 
