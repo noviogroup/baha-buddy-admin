@@ -26,6 +26,8 @@ export interface Database {
       pii_access_log: { Row: PiiAccessLogRow; Insert: Partial<PiiAccessLogRow> & Pick<PiiAccessLogRow, 'admin_email' | 'entity_type' | 'entity_id' | 'field' | 'reason'>; Update: never; Relationships: [] };
       default_header_images: { Row: DefaultHeaderImageRow; Insert: Partial<DefaultHeaderImageRow> & Pick<DefaultHeaderImageRow, 'title' | 'header_type' | 'scope_key' | 'desktop_image_url' | 'alt_text'>; Update: Partial<DefaultHeaderImageRow>; Relationships: [] };
       launch_readiness_tasks: { Row: LaunchReadinessTaskRow; Insert: Partial<LaunchReadinessTaskRow> & Pick<LaunchReadinessTaskRow, 'title'>; Update: Partial<LaunchReadinessTaskRow>; Relationships: [] };
+      communication_events: { Row: CommunicationEventRow; Insert: Partial<CommunicationEventRow> & Pick<CommunicationEventRow, 'user_id' | 'type' | 'category' | 'title' | 'body' | 'idempotency_key'>; Update: Partial<CommunicationEventRow>; Relationships: [] };
+      communication_deliveries: { Row: CommunicationDeliveryRow; Insert: Partial<CommunicationDeliveryRow> & Pick<CommunicationDeliveryRow, 'event_id' | 'user_id' | 'channel' | 'status'>; Update: Partial<CommunicationDeliveryRow>; Relationships: [] };
     };
     Views: {
       ai_daily_costs: { Row: AiDailyCostRow; Relationships: [] };
@@ -143,6 +145,41 @@ export interface AdminNoteRow { id: string; admin_id: string; admin_email: strin
 export interface PiiAccessLogRow { id: string; admin_id: string | null; admin_email: string; entity_type: string; entity_id: string; field: string; reason: string; ip_address: string | null; user_agent: string | null; created_at: string; }
 export interface AdminActionSummaryRow { admin_email: string; action: string; event_count: number; last_at: string; events_7d: number; events_30d: number; }
 export interface ApiCreditStatusRow { id: string; service: string; display_name: string; plan_tier: string | null; credit_balance: number | null; credit_currency: string; monthly_limit: number | null; current_month_usage: number; billing_period_start: string | null; billing_period_end: string | null; api_key_status: string; api_key_last_verified: string | null; notes: string | null; dashboard_url: string | null; created_at: string; updated_at: string; }
+
+export type CommunicationType = 'trip_invite' | 'invite_accepted' | 'collaborator_update' | 'booking_confirmed' | 'booking_failed' | 'payment_failed' | 'trip_reminder' | 'support_update' | 'admin_alert' | 'buddy_message';
+export type CommunicationCategory = 'trip_reminders' | 'booking_updates' | 'trip_collaboration' | 'buddy_messages' | 'support_updates';
+export type CommunicationChannel = 'in_app' | 'email' | 'push';
+export type CommunicationStatus = 'pending' | 'sent' | 'partial' | 'failed' | 'skipped';
+export type CommunicationDeliveryStatus = 'pending' | 'sent' | 'skipped' | 'failed';
+
+export interface CommunicationEventRow {
+  id: string;
+  user_id: string;
+  type: CommunicationType;
+  category: CommunicationCategory;
+  title: string;
+  body: string;
+  route: string | null;
+  payload: Record<string, unknown>;
+  idempotency_key: string;
+  status: CommunicationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunicationDeliveryRow {
+  id: string;
+  event_id: string;
+  user_id: string;
+  channel: CommunicationChannel;
+  status: CommunicationDeliveryStatus;
+  provider: string | null;
+  provider_message_id: string | null;
+  target: string | null;
+  error: string | null;
+  attempted_at: string;
+  created_at: string;
+}
 
 export interface DefaultHeaderImageRow {
   id: string;

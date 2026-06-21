@@ -43,6 +43,7 @@ export type AdminModuleId =
   | 'destination-intelligence'
   | 'content-performance'
   | 'chat'
+  | 'communications'
   | 'billing'
   | 'support'
   | 'admin-users'
@@ -114,6 +115,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     defaultOpen: false,
     items: [
       { id: 'chat', label: 'Chat & AI', description: 'Buddy usage, AI cost, tool calls, topics, and chat-to-trip conversion.', icon: <Bot size={17} /> },
+      { id: 'communications', label: 'Communications', description: 'Transactional email, push, in-app events, delivery attempts, and safe resends.', icon: <MessageSquare size={17} />, badge: 'New' },
       { id: 'billing', label: 'Billing & APIs', description: 'API credits, AI usage, provider costs, key status, and service health.', icon: <CreditCard size={17} /> },
       { id: 'admin-users', label: 'Admin Users', description: 'Admin roles, active status, access control, and team permissions.', icon: <Settings size={17} />, badge: 'New' },
       { id: 'audit', label: 'Audit Log', description: 'Admin activity, PII reveals, role changes, and mutation accountability.', icon: <ShieldCheck size={17} /> },

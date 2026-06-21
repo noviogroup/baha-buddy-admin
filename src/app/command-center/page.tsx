@@ -15,7 +15,7 @@ import { GuidedDayModule } from '@/components/guided-day-module';
 import { DefaultMediaLibraryModule } from '@/components/default-media-library-module';
 import { DealsManagerModule } from '@/components/deals-manager-module';
 import { LaunchReadinessModule } from '@/components/launch-readiness-module';
-import { AuditModule, BillingModule, ChatModule, ContentPerformanceModule, DestinationIntelligenceModule, SupportModule, TravelersModule, TripsModule } from '@/components/admin-core-modules';
+import { AuditModule, BillingModule, ChatModule, CommunicationsModule, ContentPerformanceModule, DestinationIntelligenceModule, SupportModule, TravelersModule, TripsModule } from '@/components/admin-core-modules';
 import { ADMIN_MODULE_LOOKUP, type AdminModuleId } from '@/lib/admin-navigation';
 
 export default function CommandCenterPage() {
@@ -66,6 +66,7 @@ export default function CommandCenterPage() {
     if (activeModule === 'destination-intelligence') return <DestinationIntelligenceModule />;
     if (activeModule === 'content-performance') return <ContentPerformanceModule />;
     if (activeModule === 'chat') return <ChatModule />;
+    if (activeModule === 'communications') return <CommunicationsModule />;
     if (activeModule === 'billing') return <BillingModule />;
     if (activeModule === 'support') return <SupportModule />;
     if (activeModule === 'audit') return <AuditModule />;

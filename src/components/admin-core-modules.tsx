@@ -1,6 +1,8 @@
 'use client';
 
-import { AlertTriangle, BarChart3, Bot, CreditCard, FileText, HelpCircle, MapPinned, RefreshCw, Users, Compass, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, BarChart3, Bot, CreditCard, FileText, HelpCircle, MapPinned, MessageSquare, RefreshCw, Send, Users, Compass, ShieldCheck } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 import { useApi } from '@/lib/use-api';
 
 function titleCase(value: unknown) {
@@ -155,6 +157,84 @@ export function ChatModule() {
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Chat & AI" error={error} />;
   const threads = data.threads || [];
   return <Shell title="Chat & AI" description="Review recent Buddy threads, traveler context, linked trips, and chat-to-trip/concierge signals." icon={<Bot size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Recent threads" value={threads.length} /><Stat label="Linked trips" value={threads.filter((t: any) => t.trip_id || t.trips).length} /><Stat label="Open conversations" value={threads.filter((t: any) => t.status !== 'closed').length} /><Stat label="Needs review" value={threads.filter((t: any) => t.needs_review).length} /></div><SimpleTable headers={['Thread','Traveler','Trip','Updated']} rows={threads.map((t: any) => [<div><div className="font-semibold text-ink">{t.title || 'Buddy conversation'}</div><div className="text-[11px] text-muted">{t.id}</div></div>, t.users?.display_name || t.users?.email || t.user_id || '—', t.trips?.name || t.trip_id || '—', t.updated_at ? new Date(t.updated_at).toLocaleString() : '—'])} empty="No chat threads found." /></Shell>;
+}
+
+export function CommunicationsModule() {
+  const { data, loading, error, reload } = useApi<any>('/api/communications?limit=100');
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const handleResend = async (eventId: string) => {
+    setResendingId(eventId);
+    setNotice(null);
+    try {
+      const res = await apiFetch('/api/communications', {
+        method: 'POST',
+        body: JSON.stringify({ event_id: eventId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Resend failed');
+      setNotice('Transactional email resend queued.');
+      reload();
+    } catch (err: any) {
+      setNotice(err.message || 'Resend failed');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Communications" error={error} />;
+  const events = data.events || [];
+  const summary = data.summary || {};
+
+  return (
+    <Shell title="Communications" description="Review transactional communication events, email/push/in-app deliveries, provider errors, and audited safe resends." icon={<MessageSquare size={19} />} onRefresh={reload}>
+      {data.note && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}
+      {notice && <div className="bg-brand-blue-light text-brand-blue rounded-xl border border-hairline p-4 text-sm font-semibold">{notice}</div>}
+      <div className="grid grid-cols-4 gap-3">
+        <Stat label="Events" value={summary.total ?? events.length} sub={`${events.length} loaded`} />
+        <Stat label="Sent" value={summary.sent ?? 0} />
+        <Stat label="Failed" value={summary.failed ?? 0} />
+        <Stat label="Email failures" value={summary.emailFailures ?? 0} sub="Eligible for safe resend" />
+      </div>
+
+      <SimpleTable
+        headers={['Event','Traveler','Deliveries','Route','Created','Action']}
+        rows={events.map((event: any) => {
+          const deliveries = Array.isArray(event.deliveries) ? event.deliveries : [];
+          const canResend = Boolean(event.can_resend_email);
+          return [
+            <div>
+              <div className="font-semibold text-ink">{event.title || titleCase(event.type)}</div>
+              <div className="text-[11px] text-muted">{titleCase(event.type)} · {titleCase(event.status)}</div>
+              <div className="font-mono text-[11px] text-muted">{event.id}</div>
+            </div>,
+            <div>
+              <div className="font-semibold text-ink">{event.user?.display_name || event.user?.email || 'Traveler'}</div>
+              <div className="font-mono text-[11px] text-muted">{event.user_id}</div>
+            </div>,
+            <div className="flex flex-col gap-1">
+              {deliveries.map((delivery: any) => (
+                <span key={delivery.id} className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${delivery.status === 'sent' ? 'bg-status-success-bg text-status-success' : delivery.status === 'failed' ? 'bg-status-danger-bg text-status-danger' : 'bg-surface text-muted'}`}>
+                  {delivery.channel}: {delivery.status}
+                </span>
+              ))}
+              {deliveries.length === 0 && <span className="text-xs text-muted">No deliveries logged</span>}
+            </div>,
+            event.route || '—',
+            event.created_at ? new Date(event.created_at).toLocaleString() : '—',
+            canResend ? (
+              <button onClick={() => handleResend(event.id)} disabled={resendingId === event.id} className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-white px-3 py-1.5 text-xs font-semibold text-body hover:border-brand-blue disabled:opacity-60" title="Resend failed transactional email">
+                <Send size={13} />
+                {resendingId === event.id ? 'Sending' : 'Resend email'}
+              </button>
+            ) : <span className="text-xs text-muted">—</span>,
+          ];
+        })}
+        empty="No communication events found."
+      />
+    </Shell>
+  );
 }
 
 export function BillingModule() {

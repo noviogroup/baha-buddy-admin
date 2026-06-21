@@ -51,6 +51,7 @@ export type AuditEntityType =
   | 'concierge_order'
   | 'admin_user'
   | 'api_credit_status'
+  | 'communication_event'
   | 'launch_readiness_task';
 
 export type AuditAction =
