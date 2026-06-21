@@ -42,7 +42,7 @@ export const GET = withAdminAuth(async (request, { supabase }) => {
       safeQuery(() => supabase.from('chat_threads').select('id, last_message_preview, created_at, updated_at, users!inner(display_name)').eq('trip_id', tripId).order('updated_at', { ascending: false })),
       safeQuery(() => supabase.from('trip_collaborators').select('*, users!inner(display_name, email)').eq('trip_id', tripId)),
       safeQuery(() => supabase.from('trip_accommodations').select('*').eq('trip_id', tripId).order('check_in', { ascending: true })),
-      safeQuery(() => supabase.from('trip_flights').select('*').eq('trip_id', tripId).order('departure', { ascending: true })),
+      safeQuery(() => supabase.from('trip_flights').select('*').eq('trip_id', tripId).order('departure_at', { ascending: true })),
       safeQuery(() => supabase.from('trip_activities').select('*').eq('trip_id', tripId).order('day_number', { ascending: true })),
     ]);
 

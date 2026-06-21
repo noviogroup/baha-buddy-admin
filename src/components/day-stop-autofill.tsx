@@ -55,7 +55,7 @@ export function DayStopAutofill() {
     if ((json.places || []).length === 0) setMessage('No matching places found.');
   }
 
-  function usePlace(place: PlaceResult) {
+  function applyPlaceToForm(place: PlaceResult) {
     const form = document.querySelector('[data-day-stop-form="true"]') as HTMLFormElement | null;
     if (!form) return;
 
@@ -99,7 +99,7 @@ export function DayStopAutofill() {
       {results.length > 0 && (
         <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-hairline bg-white">
           {results.map((place) => (
-            <button key={`${place.source}-${place.source_id}`} type="button" onClick={() => usePlace(place)} className="block w-full border-b border-hairline px-3 py-3 text-left hover:bg-surface/60 last:border-0">
+            <button key={`${place.source}-${place.source_id}`} type="button" onClick={() => applyPlaceToForm(place)} className="block w-full border-b border-hairline px-3 py-3 text-left hover:bg-surface/60 last:border-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-semibold text-ink">{place.name}</div>

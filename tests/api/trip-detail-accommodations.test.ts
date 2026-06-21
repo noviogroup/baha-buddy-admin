@@ -108,6 +108,7 @@ describe('GET /api/trip-detail accommodation identity', () => {
     expect(response.status).toBe(200);
     expect(accommodationsQuery.select).toHaveBeenCalledWith('*');
     expect(accommodationsQuery.eq).toHaveBeenCalledWith('trip_id', 'trip-1');
+    expect(flightsQuery.order).toHaveBeenCalledWith('departure_at', { ascending: true });
     expect(body.accommodations[0]).toMatchObject({
       id: 'trip-accommodation-1',
       place_id: 'place-grand-hyatt-baha-mar',

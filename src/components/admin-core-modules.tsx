@@ -60,15 +60,15 @@ export function TravelersModule() {
           const bookingTypes = Array.isArray(booking.bookingTypes) && booking.bookingTypes.length ? booking.bookingTypes.join(', ') : 'no booking types';
 
           return [
-            <div><div className="font-semibold text-ink">{u.display_name || 'Unnamed'}</div><div className="text-[11px] text-muted">{u.email || u.id}</div></div>,
+            <div key="traveler"><div className="font-semibold text-ink">{u.display_name || 'Unnamed'}</div><div className="text-[11px] text-muted">{u.email || u.id}</div></div>,
             [u.city, u.country].filter(Boolean).join(', ') || '—',
             u.onboarding_completed || u.profile_completed ? 'Complete' : 'Incomplete',
-            <div>
+            <div key="bookings">
               <div className="font-semibold text-ink">{booking.total || 0} bookings · {booking.tripCount || 0} trips</div>
               <div className="text-[11px] text-muted">{money(booking.recognizedRevenue || 0)} recognized · {money(booking.capturedPayments || 0)} captured</div>
               <div className="text-[11px] text-muted capitalize">{bookingTypes}</div>
             </div>,
-            <div>
+            <div key="booking-health">
               <div className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${booking.issues ? 'bg-status-danger-bg text-status-danger' : booking.total ? 'bg-status-success-bg text-status-success' : 'bg-surface text-muted'}`}>
                 {booking.issues ? `${booking.issues} issue${booking.issues === 1 ? '' : 's'}` : booking.total ? 'No booking issues' : 'No bookings'}
               </div>
@@ -112,15 +112,15 @@ export function TripsModule() {
           const bookingTypes = Array.isArray(booking.bookingTypes) && booking.bookingTypes.length ? booking.bookingTypes.join(', ') : 'no booking types';
 
           return [
-            <div><div className="font-semibold text-ink">{t.name || 'Untitled trip'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
+            <div key="trip"><div className="font-semibold text-ink">{t.name || 'Untitled trip'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
             t.users?.display_name || t.users?.email || t.user_id || '—',
             titleCase(t.status),
-            <div>
+            <div key="bookings">
               <div className="font-semibold text-ink">{booking.total || 0} bookings</div>
               <div className="text-[11px] text-muted">{money(booking.recognizedRevenue || 0)} recognized · {money(booking.capturedPayments || 0)} captured</div>
               <div className="text-[11px] text-muted capitalize">{bookingTypes}</div>
             </div>,
-            <div>
+            <div key="booking-health">
               <div className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${booking.issues ? 'bg-status-danger-bg text-status-danger' : booking.total ? 'bg-status-success-bg text-status-success' : 'bg-surface text-muted'}`}>
                 {booking.issues ? `${booking.issues} issue${booking.issues === 1 ? '' : 's'}` : booking.total ? 'No booking issues' : 'No bookings'}
               </div>
@@ -149,14 +149,14 @@ export function ContentPerformanceModule() {
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Content Performance" error={error} />;
   const feed = data.feed || [];
   const counts = feed.reduce((acc: any, item: any) => { acc[item.type] = (acc[item.type] || 0) + 1; return acc; }, {});
-  return <Shell title="Content Performance" description="Early activity attribution surface for content, chat, bookings, trips, and traveler engagement until full content-event tracking is live." icon={<FileText size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Recent activity" value={feed.length} sub="Last 24h feed" /><Stat label="Chat signals" value={counts.chat_message || 0} /><Stat label="Trips created" value={counts.trip_created || 0} /><Stat label="Bookings" value={counts.booking || 0} /></div><SimpleTable headers={['Activity','Type','When']} rows={feed.map((f: any) => [<div><div className="font-semibold text-ink">{f.title}</div><div className="text-[11px] text-muted">{f.subtitle}</div></div>, titleCase(f.type), f.timestamp ? new Date(f.timestamp).toLocaleString() : '—'])} empty="No recent activity yet." /></Shell>;
+  return <Shell title="Content Performance" description="Early activity attribution surface for content, chat, bookings, trips, and traveler engagement until full content-event tracking is live." icon={<FileText size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Recent activity" value={feed.length} sub="Last 24h feed" /><Stat label="Chat signals" value={counts.chat_message || 0} /><Stat label="Trips created" value={counts.trip_created || 0} /><Stat label="Bookings" value={counts.booking || 0} /></div><SimpleTable headers={['Activity','Type','When']} rows={feed.map((f: any) => [<div key="activity"><div className="font-semibold text-ink">{f.title}</div><div className="text-[11px] text-muted">{f.subtitle}</div></div>, titleCase(f.type), f.timestamp ? new Date(f.timestamp).toLocaleString() : '—'])} empty="No recent activity yet." /></Shell>;
 }
 
 export function ChatModule() {
   const { data, loading, error, reload } = useApi<any>('/api/chat-threads');
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Chat & AI" error={error} />;
   const threads = data.threads || [];
-  return <Shell title="Chat & AI" description="Review recent Buddy threads, traveler context, linked trips, and chat-to-trip/concierge signals." icon={<Bot size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Recent threads" value={threads.length} /><Stat label="Linked trips" value={threads.filter((t: any) => t.trip_id || t.trips).length} /><Stat label="Open conversations" value={threads.filter((t: any) => t.status !== 'closed').length} /><Stat label="Needs review" value={threads.filter((t: any) => t.needs_review).length} /></div><SimpleTable headers={['Thread','Traveler','Trip','Updated']} rows={threads.map((t: any) => [<div><div className="font-semibold text-ink">{t.title || 'Buddy conversation'}</div><div className="text-[11px] text-muted">{t.id}</div></div>, t.users?.display_name || t.users?.email || t.user_id || '—', t.trips?.name || t.trip_id || '—', t.updated_at ? new Date(t.updated_at).toLocaleString() : '—'])} empty="No chat threads found." /></Shell>;
+  return <Shell title="Chat & AI" description="Review recent Buddy threads, traveler context, linked trips, and chat-to-trip/concierge signals." icon={<Bot size={19} />} onRefresh={reload}><div className="grid grid-cols-4 gap-3"><Stat label="Recent threads" value={threads.length} /><Stat label="Linked trips" value={threads.filter((t: any) => t.trip_id || t.trips).length} /><Stat label="Open conversations" value={threads.filter((t: any) => t.status !== 'closed').length} /><Stat label="Needs review" value={threads.filter((t: any) => t.needs_review).length} /></div><SimpleTable headers={['Thread','Traveler','Trip','Updated']} rows={threads.map((t: any) => [<div key="thread"><div className="font-semibold text-ink">{t.title || 'Buddy conversation'}</div><div className="text-[11px] text-muted">{t.id}</div></div>, t.users?.display_name || t.users?.email || t.user_id || '—', t.trips?.name || t.trip_id || '—', t.updated_at ? new Date(t.updated_at).toLocaleString() : '—'])} empty="No chat threads found." /></Shell>;
 }
 
 export function CommunicationsModule() {
@@ -204,16 +204,16 @@ export function CommunicationsModule() {
           const deliveries = Array.isArray(event.deliveries) ? event.deliveries : [];
           const canResend = Boolean(event.can_resend_email);
           return [
-            <div>
+            <div key="event">
               <div className="font-semibold text-ink">{event.title || titleCase(event.type)}</div>
               <div className="text-[11px] text-muted">{titleCase(event.type)} · {titleCase(event.status)}</div>
               <div className="font-mono text-[11px] text-muted">{event.id}</div>
             </div>,
-            <div>
+            <div key="traveler">
               <div className="font-semibold text-ink">{event.user?.display_name || event.user?.email || 'Traveler'}</div>
               <div className="font-mono text-[11px] text-muted">{event.user_id}</div>
             </div>,
-            <div className="flex flex-col gap-1">
+            <div key="deliveries" className="flex flex-col gap-1">
               {deliveries.map((delivery: any) => (
                 <span key={delivery.id} className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${delivery.status === 'sent' ? 'bg-status-success-bg text-status-success' : delivery.status === 'failed' ? 'bg-status-danger-bg text-status-danger' : 'bg-surface text-muted'}`}>
                   {delivery.channel}: {delivery.status}
@@ -224,11 +224,11 @@ export function CommunicationsModule() {
             event.route || '—',
             event.created_at ? new Date(event.created_at).toLocaleString() : '—',
             canResend ? (
-              <button onClick={() => handleResend(event.id)} disabled={resendingId === event.id} className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-white px-3 py-1.5 text-xs font-semibold text-body hover:border-brand-blue disabled:opacity-60" title="Resend failed transactional email">
+              <button key="resend" onClick={() => handleResend(event.id)} disabled={resendingId === event.id} className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-white px-3 py-1.5 text-xs font-semibold text-body hover:border-brand-blue disabled:opacity-60" title="Resend failed transactional email">
                 <Send size={13} />
                 {resendingId === event.id ? 'Sending' : 'Resend email'}
               </button>
-            ) : <span className="text-xs text-muted">—</span>,
+            ) : <span key="no-action" className="text-xs text-muted">—</span>,
           ];
         })}
         empty="No communication events found."
@@ -351,7 +351,7 @@ export function SupportModule() {
       <SimpleTable
         headers={['Ticket','Traveler','Status','Messages','Created']}
         rows={tickets.map((t: any) => [
-          <div><div className="font-semibold text-ink">{t.subject || 'Support request'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
+          <div key="ticket"><div className="font-semibold text-ink">{t.subject || 'Support request'}</div><div className="text-[11px] text-muted">{t.id}</div></div>,
           t.users?.display_name || t.users?.email || t.user_id || '—',
           titleCase(t.status),
           Array.isArray(t.support_messages) ? t.support_messages.length : 0,
@@ -367,5 +367,5 @@ export function AuditModule() {
   const { data, loading, error, reload } = useApi<any>('/api/audit-log?limit=50');
   if (loading) return <LoadingCard />; if (error || !data) return <ErrorCard label="Audit Log" error={error} />;
   const entries = data.entries || [];
-  return <Shell title="Audit Log" description="Review admin activity, role changes, order updates, payment actions, PII access, and operational accountability." icon={<ShieldCheck size={19} />} onRefresh={reload}>{data.note && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}<div className="grid grid-cols-4 gap-3"><Stat label="Entries" value={data.total || entries.length} /><Stat label="Loaded" value={entries.length} /><Stat label="Admins" value={(data.filters?.admins || []).length} /><Stat label="Actions" value={(data.filters?.actions || []).length} /></div><SimpleTable headers={['Action','Admin','Entity','When']} rows={entries.map((e: any) => [<div><div className="font-semibold text-ink">{titleCase(e.action)}</div><div className="text-[11px] text-muted">{e.id}</div></div>, e.admin_email || e.admin_id || '—', `${e.entity_type || '—'} ${e.entity_id || ''}`, e.created_at ? new Date(e.created_at).toLocaleString() : '—'])} empty="No audit entries yet." /></Shell>;
+  return <Shell title="Audit Log" description="Review admin activity, role changes, order updates, payment actions, PII access, and operational accountability." icon={<ShieldCheck size={19} />} onRefresh={reload}>{data.note && <div className="bg-status-warning-bg text-status-warning rounded-xl border border-hairline p-4 text-sm font-semibold">{data.note}</div>}<div className="grid grid-cols-4 gap-3"><Stat label="Entries" value={data.total || entries.length} /><Stat label="Loaded" value={entries.length} /><Stat label="Admins" value={(data.filters?.admins || []).length} /><Stat label="Actions" value={(data.filters?.actions || []).length} /></div><SimpleTable headers={['Action','Admin','Entity','When']} rows={entries.map((e: any) => [<div key="action"><div className="font-semibold text-ink">{titleCase(e.action)}</div><div className="text-[11px] text-muted">{e.id}</div></div>, e.admin_email || e.admin_id || '—', `${e.entity_type || '—'} ${e.entity_id || ''}`, e.created_at ? new Date(e.created_at).toLocaleString() : '—'])} empty="No audit entries yet." /></Shell>;
 }
